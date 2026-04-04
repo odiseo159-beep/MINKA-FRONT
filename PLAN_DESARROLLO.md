@@ -35,7 +35,7 @@
 - [x] Crear componentes UI (toast, form inputs)
 - [x] **COMPLETADO**: Resolver errores de npm/localhost (2026-04-04: downgrade Next.js 16→14.2.35, fix tailwind config, fix TS types)
 - [x] Probar conexión con backend (2026-04-04: fix tipo_caso string flexible, parseDate para formato backend)
-- [ ] Deploy en Vercel
+- [x] Deploy en Vercel (2026-04-04: https://minka-front.vercel.app)
 
 ### 1.2 Autenticación Backend
 - [x] Crear auth.py (JWT + bcrypt)
@@ -43,10 +43,10 @@
 - [x] Crear auth_api.py (endpoints /auth/*)
 - [x] Crear login.html (versión HTML estática)
 - [x] Crear INTEGRACION_AUTH.md
-- [ ] **PENDIENTE**: Integrar auth en main.py del backend
+- [x] Integrar auth en main.py del backend (2026-04-04: auth_router registrado, init_users_db en lifespan)
 - [ ] Probar login end-to-end
-- [ ] Crear usuario admin inicial
-- [ ] Proteger endpoints /api/casos con auth
+- [x] Crear usuario admin inicial (2026-04-04: auto-creado en lifespan con ADMIN_EMAIL/ADMIN_PASSWORD env vars)
+- [x] Proteger endpoints /api/casos con auth (2026-04-04: Depends(require_auth) en todos los endpoints, REQUIRE_AUTH env toggle)
 
 ### 1.3 Dashboard Mejoras UX
 - [x] Responsive mobile (2026-04-04: sidebar colapsable, case cards mobile, hamburger menu)

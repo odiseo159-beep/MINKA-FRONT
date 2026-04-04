@@ -58,8 +58,8 @@ export const authApi = {
     await fetchAPI("/auth/logout", { method: "POST" });
   },
 
-  verify: async (): Promise<VerifyResponse> => {
-    return fetchAPI<VerifyResponse>("/auth/verificar");
+  verify: async (token?: string): Promise<VerifyResponse> => {
+    return fetchAPI<VerifyResponse>("/auth/verificar", { token });
   },
 
   getMe: async (token: string): Promise<User> => {

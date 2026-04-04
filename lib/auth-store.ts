@@ -62,7 +62,7 @@ export const useAuthStore = create<AuthStore>()(
         }
 
         try {
-          const response = await authApi.verify();
+          const response = await authApi.verify(token);
           if (response.autenticado) {
             set({ 
               isAuthenticated: true, 
