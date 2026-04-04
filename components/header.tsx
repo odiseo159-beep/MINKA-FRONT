@@ -3,10 +3,14 @@
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/auth-store";
 import { getInitials } from "@/lib/utils";
-import { LogOut, User, Settings, ChevronDown } from "lucide-react";
+import { LogOut, User, Settings, ChevronDown, Menu } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 
-export function Header() {
+interface HeaderProps {
+  onMenuClick?: () => void;
+}
+
+export function Header({ onMenuClick }: HeaderProps) {
   const router = useRouter();
   const { user, logout } = useAuthStore();
   const [isOpen, setIsOpen] = useState(false);
@@ -28,6 +32,7 @@ export function Header() {
     router.push("/login");
   };
 
+  const displayName = user?.nombre || user?.email || "Daniel";
   const roleLabel = {
     admin: "Administrador",
     abogado: "Abogado",
@@ -36,8 +41,16 @@ export function Header() {
 
   return (
     <header className="h-16 bg-white border-b border-gray-200 px-6 flex items-center justify-between">
-      {/* Left side - Page title (can be dynamic) */}
-      <div>
+      {/* Left side - Menu button + title */}
+      <div className="flex items-center gap-3">
+        {onMenuClick && (
+          <button
+            onClick={onMenuClick}
+            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg lg:hidden"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+        )}
         <h2 className="text-lg font-semibold text-gray-900">Dashboard</h2>
       </div>
 
@@ -49,13 +62,13 @@ export function Header() {
         >
           {/* Avatar */}
           <div className="w-9 h-9 bg-minka-500 rounded-full flex items-center justify-center text-white font-medium text-sm">
-            {getInitials(user?.nombre || user?.email)}
+            {getInitials(displayName)}
           </div>
           
           {/* User info */}
           <div className="text-left hidden sm:block">
             <p className="text-sm font-medium text-gray-900">
-              {user?.nombre || user?.email}
+              {displayName}
             </p>
             <p className="text-xs text-gray-500">{roleLabel}</p>
           </div>
@@ -69,7 +82,7 @@ export function Header() {
             {/* User info (mobile) */}
             <div className="px-4 py-3 border-b border-gray-100 sm:hidden">
               <p className="text-sm font-medium text-gray-900">
-                {user?.nombre || user?.email}
+                {displayName}
               </p>
               <p className="text-xs text-gray-500">{roleLabel}</p>
             </div>

@@ -3,7 +3,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import type { Case, CaseFormData, CaseStatus, CaseType } from "@/types";
+import type { Case, CaseFormData } from "@/types";
 import { STATUS_LABELS, CASE_TYPE_LABELS } from "@/types";
 
 // Validation schema

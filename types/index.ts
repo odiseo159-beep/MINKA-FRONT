@@ -26,8 +26,8 @@ export interface Case {
   telefono: string;
   nombre_cliente: string;
   expediente?: string;
-  tipo_caso: CaseType;
-  estado: CaseStatus;
+  tipo_caso: string;
+  estado: string;
   proxima_fecha?: string;
   proxima_accion?: string;
   documentos_pendientes?: string;
@@ -41,8 +41,8 @@ export interface CaseFormData {
   telefono: string;
   nombre_cliente: string;
   expediente?: string;
-  tipo_caso: CaseType;
-  estado: CaseStatus;
+  tipo_caso: string;
+  estado: string;
   proxima_fecha?: string;
   proxima_accion?: string;
   documentos_pendientes?: string;
@@ -106,9 +106,28 @@ export interface DashboardStats {
 }
 
 // ============================================
+// FILTERS
+// ============================================
+export interface CaseFilters {
+  search: string;
+  status: string;
+  caseType: string;
+  dateFrom: string;
+  dateTo: string;
+}
+
+export const DEFAULT_FILTERS: CaseFilters = {
+  search: "",
+  status: "",
+  caseType: "",
+  dateFrom: "",
+  dateTo: "",
+};
+
+// ============================================
 // UI HELPERS
 // ============================================
-export const STATUS_LABELS: Record<CaseStatus, string> = {
+export const STATUS_LABELS: Record<string, string> = {
   nuevo: "Nuevo",
   en_tramite: "En trámite",
   en_audiencia: "En audiencia",
@@ -119,7 +138,7 @@ export const STATUS_LABELS: Record<CaseStatus, string> = {
   archivado: "Archivado",
 };
 
-export const STATUS_COLORS: Record<CaseStatus, string> = {
+export const STATUS_COLORS: Record<string, string> = {
   nuevo: "bg-blue-100 text-blue-800",
   en_tramite: "bg-amber-100 text-amber-800",
   en_audiencia: "bg-purple-100 text-purple-800",
@@ -130,7 +149,7 @@ export const STATUS_COLORS: Record<CaseStatus, string> = {
   archivado: "bg-gray-100 text-gray-800",
 };
 
-export const CASE_TYPE_LABELS: Record<CaseType, string> = {
+export const CASE_TYPE_LABELS: Record<string, string> = {
   penal_estafa: "Penal - Estafa",
   penal_robo: "Penal - Robo",
   penal_lesiones: "Penal - Lesiones",
@@ -139,4 +158,9 @@ export const CASE_TYPE_LABELS: Record<CaseType, string> = {
   familia_tenencia: "Familia - Tenencia",
   civil_desalojo: "Civil - Desalojo",
   civil_otro: "Civil - Otro",
+  // Backend string values
+  "Alimentos": "Alimentos",
+  "Penal - Estafa": "Penal - Estafa",
+  "Laboral": "Laboral",
+  "Civil - Desalojo": "Civil - Desalojo",
 };

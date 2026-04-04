@@ -3,6 +3,13 @@ import { twMerge } from "tailwind-merge";
 import { format, formatDistanceToNow, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 
+// Parse date string that may or may not have ISO T separator
+function parseDate(dateStr: string): Date {
+  // Handle "2026-03-22 22:43:21" format (backend) by replacing space with T
+  const normalized = dateStr.includes("T") ? dateStr : dateStr.replace(" ", "T");
+  return parseISO(normalized);
+}
+
 // Merge Tailwind classes
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -12,7 +19,7 @@ export function cn(...inputs: ClassValue[]) {
 export function formatDate(dateStr?: string | null): string {
   if (!dateStr) return "-";
   try {
-    return format(parseISO(dateStr), "dd MMM yyyy", { locale: es });
+    return format(parseDate(dateStr), "dd MMM yyyy", { locale: es });
   } catch {
     return "-";
   }
@@ -22,7 +29,7 @@ export function formatDate(dateStr?: string | null): string {
 export function formatRelativeTime(dateStr?: string | null): string {
   if (!dateStr) return "-";
   try {
-    return formatDistanceToNow(parseISO(dateStr), { 
+    return formatDistanceToNow(parseDate(dateStr), {
       addSuffix: true, 
       locale: es 
     });
@@ -35,7 +42,7 @@ export function formatRelativeTime(dateStr?: string | null): string {
 export function getDateUrgencyClass(dateStr?: string | null): string {
   if (!dateStr) return "";
   try {
-    const date = parseISO(dateStr);
+    const date = parseDate(dateStr);
     const today = new Date();
     const diffDays = Math.ceil((date.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
     

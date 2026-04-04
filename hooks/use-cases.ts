@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { casesApi, calculateStats } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
-import type { Case, CaseFormData, CaseStatus } from "@/types";
+import type { Case, CaseFormData, CaseFilters } from "@/types";
 
 // Query keys
 export const caseKeys = {
@@ -100,13 +100,12 @@ export function useNotifyClient() {
 // Filter cases helper
 export function filterCases(
   cases: Case[],
-  search: string,
-  statusFilter: CaseStatus | ""
+  filters: CaseFilters
 ): Case[] {
   let filtered = cases;
 
-  if (search) {
-    const searchLower = search.toLowerCase();
+  if (filters.search) {
+    const searchLower = filters.search.toLowerCase();
     filtered = filtered.filter(
       (c) =>
         c.nombre_cliente.toLowerCase().includes(searchLower) ||
@@ -114,8 +113,24 @@ export function filterCases(
     );
   }
 
-  if (statusFilter) {
-    filtered = filtered.filter((c) => c.estado === statusFilter);
+  if (filters.status) {
+    filtered = filtered.filter((c) => c.estado === filters.status);
+  }
+
+  if (filters.caseType) {
+    filtered = filtered.filter((c) => c.tipo_caso === filters.caseType);
+  }
+
+  if (filters.dateFrom) {
+    filtered = filtered.filter(
+      (c) => c.proxima_fecha && c.proxima_fecha >= filters.dateFrom
+    );
+  }
+
+  if (filters.dateTo) {
+    filtered = filtered.filter(
+      (c) => c.proxima_fecha && c.proxima_fecha <= filters.dateTo
+    );
   }
 
   return filtered;

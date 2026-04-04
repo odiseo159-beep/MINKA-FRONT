@@ -1,26 +1,43 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useCases, useCreateCase, useUpdateCase, useNotifyClient, filterCases } from "@/hooks/use-cases";
+import { useDebounce } from "@/hooks/use-debounce";
+import { TableRowSkeleton } from "@/components/skeletons";
+import { EmptyNoCases, EmptyNoResults, EmptyError } from "@/components/empty-states";
+import { CaseCard } from "@/components/case-card";
+import { CaseCardSkeleton } from "@/components/skeletons";
+import { useSortState, sortCases } from "@/hooks/use-sort";
+import { usePagination } from "@/hooks/use-pagination";
+import { Pagination } from "@/components/pagination";
+import type { SortField } from "@/hooks/use-sort";
 import { CaseForm } from "@/components/case-form";
 import { StatsCards } from "@/components/stats-cards";
 import { useToast } from "@/components/ui/use-toast";
 import { formatDate, formatRelativeTime, getDateUrgencyClass } from "@/lib/utils";
-import { STATUS_LABELS, STATUS_COLORS, CASE_TYPE_LABELS } from "@/types";
-import type { Case, CaseFormData, CaseStatus } from "@/types";
-import { 
-  Plus, 
-  Search, 
-  Filter, 
-  Edit2, 
-  MessageSquare, 
-  Scale,
-  MoreHorizontal,
-  X
+import { STATUS_LABELS, STATUS_COLORS, CASE_TYPE_LABELS, DEFAULT_FILTERS } from "@/types";
+import type { Case, CaseFormData, CaseFilters } from "@/types";
+import { FilterBar } from "@/components/filter-bar";
+import {
+  Edit2,
+  MessageSquare,
+  X,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function CasosPage() {
+  return (
+    <Suspense fallback={<div className="flex justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-minka-500" /></div>}>
+      <CasosContent />
+    </Suspense>
+  );
+}
+
+function CasosContent() {
   const searchParams = useSearchParams();
   const { data: cases, isLoading, error } = useCases();
   const createCase = useCreateCase();
@@ -28,8 +45,9 @@ export default function CasosPage() {
   const notifyClient = useNotifyClient();
   const { toast } = useToast();
 
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<CaseStatus | "">("");
+  const [filters, setFilters] = useState<CaseFilters>(DEFAULT_FILTERS);
+  const debouncedSearch = useDebounce(filters.search, 300);
+  const { sortField, sortDirection, toggleSort } = useSortState();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCase, setEditingCase] = useState<Case | null>(null);
 
@@ -40,8 +58,10 @@ export default function CasosPage() {
     }
   }, [searchParams]);
 
-  // Filter cases
-  const filteredCases = cases ? filterCases(cases, search, statusFilter) : [];
+  // Filter → sort → paginate
+  const filteredCases = cases ? filterCases(cases, { ...filters, search: debouncedSearch }) : [];
+  const sortedCases = sortCases(filteredCases, sortField, sortDirection);
+  const pagination = usePagination(sortedCases, 10);
 
   // Calculate stats
   const stats = {
@@ -99,66 +119,72 @@ export default function CasosPage() {
       {/* Stats */}
       <StatsCards stats={stats} isLoading={isLoading} />
 
-      {/* Toolbar */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        {/* Search */}
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Buscar por nombre o expediente..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-minka-500 focus:border-minka-500 outline-none"
+      {/* Filters */}
+      <FilterBar
+        filters={filters}
+        onChange={setFilters}
+        onClearAll={() => setFilters(DEFAULT_FILTERS)}
+        onNewCase={() => { setEditingCase(null); setIsModalOpen(true); }}
+      />
+
+      {/* Mobile card view */}
+      <div className="lg:hidden space-y-3">
+        {isLoading ? (
+          <CaseCardSkeleton count={3} />
+        ) : error ? (
+          <EmptyError
+            message={error instanceof Error ? error.message : undefined}
+            onRetry={() => window.location.reload()}
           />
-        </div>
-
-        {/* Filter */}
-        <div className="relative">
-          <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as CaseStatus | "")}
-            className="pl-9 pr-8 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-minka-500 focus:border-minka-500 outline-none appearance-none bg-white min-w-[160px]"
-          >
-            <option value="">Todos los estados</option>
-            {Object.entries(STATUS_LABELS).map(([value, label]) => (
-              <option key={value} value={value}>{label}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* New case button */}
-        <button
-          onClick={() => { setEditingCase(null); setIsModalOpen(true); }}
-          className="flex items-center justify-center gap-2 px-5 py-2.5 bg-minka-500 text-white rounded-lg hover:bg-minka-600 transition-colors font-medium"
-        >
-          <Plus className="w-5 h-5" />
-          Nuevo caso
-        </button>
+        ) : cases?.length === 0 ? (
+          <EmptyNoCases onAction={() => { setEditingCase(null); setIsModalOpen(true); }} />
+        ) : filteredCases.length === 0 ? (
+          <EmptyNoResults onAction={() => setFilters(DEFAULT_FILTERS)} />
+        ) : (
+          pagination.paginatedItems.map((caso) => (
+            <CaseCard
+              key={caso.id}
+              caso={caso}
+              onEdit={handleEdit}
+              onNotify={handleNotify}
+            />
+          ))
+        )}
       </div>
 
-      {/* Cases table */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      {/* Desktop table view */}
+      <div className="hidden lg:block bg-white rounded-xl border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-200">
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Cliente
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Tipo
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Estado
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Próxima fecha
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Actualizado
-                </th>
+                {([
+                  { field: "nombre_cliente" as SortField, label: "Cliente" },
+                  { field: "tipo_caso" as SortField, label: "Tipo" },
+                  { field: "estado" as SortField, label: "Estado" },
+                  { field: "proxima_fecha" as SortField, label: "Próxima fecha" },
+                  { field: "fecha_actualizacion" as SortField, label: "Actualizado" },
+                ]).map(({ field, label }) => {
+                  const isActive = sortField === field;
+                  const SortIcon = isActive
+                    ? sortDirection === "asc" ? ArrowUp : ArrowDown
+                    : ArrowUpDown;
+                  return (
+                    <th
+                      key={field}
+                      onClick={() => toggleSort(field)}
+                      className={cn(
+                        "px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer select-none hover:bg-gray-100 transition-colors",
+                        isActive ? "text-minka-600" : "text-gray-500"
+                      )}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        {label}
+                        <SortIcon className="w-3.5 h-3.5" />
+                      </div>
+                    </th>
+                  );
+                })}
                 <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
                   Acciones
                 </th>
@@ -166,45 +192,30 @@ export default function CasosPage() {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {isLoading ? (
-                // Loading skeleton
-                Array.from({ length: 5 }).map((_, i) => (
-                  <tr key={i}>
-                    <td className="px-6 py-4">
-                      <div className="h-4 bg-gray-200 rounded w-32 animate-pulse" />
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="h-4 bg-gray-200 rounded w-24 animate-pulse" />
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="h-6 bg-gray-200 rounded-full w-20 animate-pulse" />
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="h-4 bg-gray-200 rounded w-20 animate-pulse" />
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="h-4 bg-gray-200 rounded w-16 animate-pulse" />
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="h-8 bg-gray-200 rounded w-24 ml-auto animate-pulse" />
-                    </td>
-                  </tr>
-                ))
+                <TableRowSkeleton rows={5} />
+              ) : error ? (
+                <tr>
+                  <td colSpan={6}>
+                    <EmptyError
+                      message={error instanceof Error ? error.message : undefined}
+                      onRetry={() => window.location.reload()}
+                    />
+                  </td>
+                </tr>
+              ) : cases?.length === 0 ? (
+                <tr>
+                  <td colSpan={6}>
+                    <EmptyNoCases onAction={() => { setEditingCase(null); setIsModalOpen(true); }} />
+                  </td>
+                </tr>
               ) : filteredCases.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center">
-                    <div className="text-gray-400 mb-2">
-                      <Scale className="w-12 h-12 mx-auto" />
-                    </div>
-                    <p className="text-gray-600 font-medium">No hay casos</p>
-                    <p className="text-gray-400 text-sm">
-                      {search || statusFilter 
-                        ? "Intenta con otros filtros" 
-                        : "Crea tu primer caso para comenzar"}
-                    </p>
+                  <td colSpan={6}>
+                    <EmptyNoResults onAction={() => setFilters(DEFAULT_FILTERS)} />
                   </td>
                 </tr>
               ) : (
-                filteredCases.map((caso) => (
+                pagination.paginatedItems.map((caso) => (
                   <tr key={caso.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4">
                       <div>
@@ -250,6 +261,20 @@ export default function CasosPage() {
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Pagination (shared between mobile and desktop) */}
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden lg:rounded-none lg:border-0 lg:border-t">
+        <Pagination
+          currentPage={pagination.currentPage}
+          totalPages={pagination.totalPages}
+          totalItems={pagination.totalItems}
+          startIndex={pagination.startIndex}
+          endIndex={pagination.endIndex}
+          rowsPerPage={pagination.rowsPerPage}
+          onPageChange={pagination.goToPage}
+          onRowsPerPageChange={pagination.setRowsPerPage}
+        />
       </div>
 
       {/* Modal */}
