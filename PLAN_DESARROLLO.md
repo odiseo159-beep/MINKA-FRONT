@@ -111,7 +111,7 @@
 - [ ] Tiempo promedio de respuesta
 - [x] Casos urgentes (próximos 7 días) (2026-04-04: lista con links a detalle de caso)
 - [x] Clientes más activos (2026-04-04: top 5 clientes por número de casos en reportes)
-- [ ] Exportar reportes a PDF
+- [x] Exportar reportes a PDF (2026-04-04: html2canvas + jsPDF, header con branding Minka, multi-página)
 - [x] Gráfico de casos por tipo (bar chart horizontal) (2026-04-04: recharts BarChart)
 - [x] Filtro por periodo (30d, 3m, 6m, todo) (2026-04-04: selector de periodo en reportes)
 

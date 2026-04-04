@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useCallback } from "react";
 import Link from "next/link";
-import { BarChart3, AlertTriangle, ArrowRight, Calendar, Users } from "lucide-react";
+import { BarChart3, AlertTriangle, ArrowRight, Calendar, Users, Download } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import {
@@ -40,6 +40,8 @@ const BAR_COLOR = "#6366f1";
 export default function ReportesPage() {
   const { data: cases = [], isLoading } = useCases();
   const [period, setPeriod] = useState<number | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const reportRef = useRef<HTMLDivElement>(null);
 
   const filtered = useMemo(() => filterByPeriod(cases, period), [cases, period]);
   const statusData = useMemo(() => casesByStatus(filtered), [filtered]);
@@ -47,6 +49,71 @@ export default function ReportesPage() {
   const monthData = useMemo(() => casesByMonth(filtered), [filtered]);
   const urgent = useMemo(() => urgentCases(cases), [cases]);
   const topClientsData = useMemo(() => topClients(filtered), [filtered]);
+
+  const exportPDF = useCallback(async () => {
+    if (!reportRef.current) return;
+    setExporting(true);
+    try {
+      const html2canvas = (await import("html2canvas")).default;
+      const { jsPDF } = await import("jspdf");
+
+      const canvas = await html2canvas(reportRef.current, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: "#f9fafb",
+      });
+
+      const imgWidth = 210; // A4 width in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const pdf = new jsPDF("p", "mm", "a4");
+
+      // Header
+      pdf.setFillColor(192, 57, 43); // minka-500
+      pdf.rect(0, 0, 210, 25, "F");
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(18);
+      pdf.text("Minka — Reporte de Casos", 15, 16);
+      pdf.setFontSize(10);
+      pdf.text(format(new Date(), "'Generado el' d 'de' MMMM yyyy", { locale: es }), 15, 22);
+
+      // Content
+      const imgData = canvas.toDataURL("image/png");
+      const contentY = 30;
+      const pageHeight = 297; // A4 height
+      const availableHeight = pageHeight - contentY - 10;
+
+      if (imgHeight <= availableHeight) {
+        pdf.addImage(imgData, "PNG", 0, contentY, imgWidth, imgHeight);
+      } else {
+        // Multi-page
+        let y = 0;
+        let page = 0;
+        while (y < canvas.height) {
+          if (page > 0) {
+            pdf.addPage();
+          }
+          const sliceHeight = Math.min(canvas.height - y, (canvas.width * availableHeight) / imgWidth);
+          const sliceCanvas = document.createElement("canvas");
+          sliceCanvas.width = canvas.width;
+          sliceCanvas.height = sliceHeight;
+          const ctx = sliceCanvas.getContext("2d")!;
+          ctx.drawImage(canvas, 0, y, canvas.width, sliceHeight, 0, 0, canvas.width, sliceHeight);
+          const sliceData = sliceCanvas.toDataURL("image/png");
+          const sliceImgH = (sliceHeight * imgWidth) / canvas.width;
+          pdf.addImage(sliceData, "PNG", 0, page === 0 ? contentY : 10, imgWidth, sliceImgH);
+          y += sliceHeight;
+          page++;
+        }
+      }
+
+      pdf.save(`minka-reporte-${format(new Date(), "yyyy-MM-dd")}.pdf`);
+    } catch (err) {
+      console.error("Error exporting PDF:", err);
+    } finally {
+      setExporting(false);
+    }
+  }, []);
 
   if (isLoading) {
     return (
@@ -77,7 +144,25 @@ export default function ReportesPage() {
             {filtered.length} caso{filtered.length !== 1 ? "s" : ""} en el periodo seleccionado
           </p>
         </div>
-        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={exportPDF}
+            disabled={exporting}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-minka-600 border border-minka-200 rounded-lg hover:bg-minka-50 transition-colors disabled:opacity-50"
+          >
+            {exporting ? (
+              <>
+                <div className="w-4 h-4 border-2 border-minka-200 border-t-minka-500 rounded-full animate-spin" />
+                Exportando...
+              </>
+            ) : (
+              <>
+                <Download className="w-4 h-4" />
+                Exportar PDF
+              </>
+            )}
+          </button>
+          <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
           {PERIOD_OPTIONS.map((opt) => (
             <button
               key={opt.label}
@@ -91,8 +176,12 @@ export default function ReportesPage() {
               {opt.label}
             </button>
           ))}
+          </div>
         </div>
       </div>
+
+      {/* Reportable content */}
+      <div ref={reportRef}>
 
       {/* Stats summary */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -249,6 +338,8 @@ export default function ReportesPage() {
           </div>
         )}
       </div>
+
+      </div>{/* end reportRef */}
     </div>
   );
 }
