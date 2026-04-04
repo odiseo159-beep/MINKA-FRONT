@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import { BarChart3, AlertTriangle, ArrowRight, Calendar } from "lucide-react";
+import { BarChart3, AlertTriangle, ArrowRight, Calendar, Users } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import {
@@ -23,6 +23,7 @@ import {
   casesByType,
   casesByMonth,
   urgentCases,
+  topClients,
   filterByPeriod,
 } from "@/lib/report-utils";
 import { STATUS_COLORS, STATUS_LABELS } from "@/types";
@@ -45,6 +46,7 @@ export default function ReportesPage() {
   const typeData = useMemo(() => casesByType(filtered), [filtered]);
   const monthData = useMemo(() => casesByMonth(filtered), [filtered]);
   const urgent = useMemo(() => urgentCases(cases), [cases]);
+  const topClientsData = useMemo(() => topClients(filtered), [filtered]);
 
   if (isLoading) {
     return (
@@ -217,6 +219,35 @@ export default function ReportesPage() {
             </ul>
           )}
         </div>
+      </div>
+
+      {/* Top clients */}
+      <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <Users className="w-4 h-4 text-blue-500" />
+          Clientes más activos
+        </h3>
+        {topClientsData.length === 0 ? (
+          <p className="text-sm text-gray-400 text-center py-6">Sin datos</p>
+        ) : (
+          <div className="space-y-3">
+            {topClientsData.map((client, i) => (
+              <div key={client.telefono} className="flex items-center gap-3">
+                <span className="w-6 h-6 rounded-full bg-gray-100 text-gray-500 text-xs font-bold flex items-center justify-center flex-shrink-0">
+                  {i + 1}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">{client.nombre}</p>
+                  <p className="text-xs text-gray-400">{client.telefono}</p>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <p className="text-sm font-semibold text-gray-900">{client.totalCasos}</p>
+                  <p className="text-[10px] text-gray-400">{client.casosActivos} activo{client.casosActivos !== 1 ? "s" : ""}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

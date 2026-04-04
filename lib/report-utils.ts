@@ -100,6 +100,42 @@ export function urgentCases(cases: Case[], withinDays = 7): Case[] {
     });
 }
 
+export interface TopClient {
+  nombre: string;
+  telefono: string;
+  totalCasos: number;
+  casosActivos: number;
+}
+
+/**
+ * Returns top clients sorted by number of cases
+ */
+export function topClients(cases: Case[], limit = 5): TopClient[] {
+  const byPhone = new Map<string, { nombre: string; telefono: string; total: number; activos: number }>();
+
+  for (const c of cases) {
+    const key = c.telefono || c.nombre_cliente;
+    const existing = byPhone.get(key);
+    const isActive = !["resuelto", "archivado"].includes(c.estado);
+    if (existing) {
+      existing.total++;
+      if (isActive) existing.activos++;
+    } else {
+      byPhone.set(key, {
+        nombre: c.nombre_cliente,
+        telefono: c.telefono,
+        total: 1,
+        activos: isActive ? 1 : 0,
+      });
+    }
+  }
+
+  return Array.from(byPhone.values())
+    .map((v) => ({ nombre: v.nombre, telefono: v.telefono, totalCasos: v.total, casosActivos: v.activos }))
+    .sort((a, b) => b.totalCasos - a.totalCasos)
+    .slice(0, limit);
+}
+
 /**
  * Filters cases by a time period (last N days)
  */

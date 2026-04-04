@@ -99,10 +99,20 @@ export default function CaseDetailPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={handleNotify}
-            className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+            disabled={notifyClient.isPending}
+            className="flex items-center gap-2 px-4 py-2 border border-green-300 text-green-700 rounded-lg hover:bg-green-50 transition-colors disabled:opacity-50"
           >
-            <MessageSquare className="w-4 h-4" />
-            Notificar
+            {notifyClient.isPending ? (
+              <>
+                <div className="w-4 h-4 border-2 border-green-300 border-t-green-600 rounded-full animate-spin" />
+                Enviando...
+              </>
+            ) : (
+              <>
+                <MessageSquare className="w-4 h-4" />
+                Notificar por WhatsApp
+              </>
+            )}
           </button>
           <Link
             href={`/dashboard/casos?edit=${caso.id}`}

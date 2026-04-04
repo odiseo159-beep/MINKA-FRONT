@@ -44,7 +44,7 @@
 - [x] Crear login.html (versión HTML estática)
 - [x] Crear INTEGRACION_AUTH.md
 - [x] Integrar auth en main.py del backend (2026-04-04: auth_router registrado, init_users_db en lifespan)
-- [ ] Probar login end-to-end
+- [x] Probar login end-to-end (2026-04-04: verificado con curl, Railway devuelve JWT correctamente)
 - [x] Crear usuario admin inicial (2026-04-04: auto-creado en lifespan con ADMIN_EMAIL/ADMIN_PASSWORD env vars)
 - [x] Proteger endpoints /api/casos con auth (2026-04-04: Depends(require_auth) en todos los endpoints, REQUIRE_AUTH env toggle)
 
@@ -58,11 +58,11 @@
 - [x] Empty states con ilustraciones (2026-04-04: SVG inline para no-cases, no-results, error)
 
 ### 1.4 Notificaciones Proactivas
-- [ ] Endpoint POST /api/casos/:id/notificar funcionando
-- [ ] Templates de mensajes WhatsApp
+- [x] Endpoint POST /api/casos/:id/notificar funcionando (2026-04-04: creado en dashboard_api.py, envía WhatsApp via Whapi)
+- [x] Templates de mensajes WhatsApp (2026-04-04: template con estado, expediente, próxima fecha/acción, documentos)
 - [ ] Historial de notificaciones enviadas
-- [ ] Toggle de notificación por caso
-- [ ] Notificación automática al cambiar estado
+- [x] Toggle de notificación por caso (2026-04-04: notificar_cliente flag en CaseUpdate, botón en detalle de caso)
+- [x] Notificación automática al cambiar estado (2026-04-04: envía automáticamente al actualizar caso si notificar_cliente=true)
 
 ### 1.5 Testing y Documentación
 - [x] Tests unitarios (2026-04-04: Vitest + 44 tests para utils, sort, pagination, debounce)
@@ -110,7 +110,7 @@
 - [x] Gráfico de casos por mes (bar chart) (2026-04-04: recharts BarChart vertical por mes)
 - [ ] Tiempo promedio de respuesta
 - [x] Casos urgentes (próximos 7 días) (2026-04-04: lista con links a detalle de caso)
-- [ ] Clientes más activos
+- [x] Clientes más activos (2026-04-04: top 5 clientes por número de casos en reportes)
 - [ ] Exportar reportes a PDF
 - [x] Gráfico de casos por tipo (bar chart horizontal) (2026-04-04: recharts BarChart)
 - [x] Filtro por periodo (30d, 3m, 6m, todo) (2026-04-04: selector de periodo en reportes)
