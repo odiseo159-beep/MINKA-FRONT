@@ -60,13 +60,13 @@
 ### 1.4 Notificaciones Proactivas
 - [x] Endpoint POST /api/casos/:id/notificar funcionando (2026-04-04: creado en dashboard_api.py, envía WhatsApp via Whapi)
 - [x] Templates de mensajes WhatsApp (2026-04-04: template con estado, expediente, próxima fecha/acción, documentos)
-- [ ] Historial de notificaciones enviadas
+- [x] Historial de notificaciones enviadas (2026-04-05: Zustand store persistido, página /dashboard/notificaciones con filtros y búsqueda)
 - [x] Toggle de notificación por caso (2026-04-04: notificar_cliente flag en CaseUpdate, botón en detalle de caso)
 - [x] Notificación automática al cambiar estado (2026-04-04: envía automáticamente al actualizar caso si notificar_cliente=true)
 
 ### 1.5 Testing y Documentación
 - [x] Tests unitarios (2026-04-04: Vitest + 44 tests para utils, sort, pagination, debounce)
-- [ ] Tests de integración (API calls)
+- [x] Tests de integración (2026-04-05: 80 tests — api.test.ts, report-utils.test.ts, client-utils.test.ts)
 - [x] README actualizado (2026-04-04: estructura completa, testing, estado actual, funcionalidades)
 - [ ] Video demo del producto
 
@@ -75,17 +75,10 @@
 ## 🎯 Fase 2: Plataforma del Abogado (Q3 2026) — 8 semanas
 
 ### 2.1 Modelo de Abogado
-- [ ] Crear modelo Abogado en SQLite
-  ```python
-  # id, nombre, email, telefono, colegiatura, 
-  # especialidades, whatsapp_numero, activo
-  ```
-- [ ] Crear modelo EstudioJuridico
-  ```python
-  # id, nombre, ruc, direccion, plan, fecha_creacion
-  ```
-- [ ] Relación: Caso → Abogado → Estudio
-- [ ] CRUD de abogados en dashboard
+- [x] Crear modelo Abogado en SQLite (2026-04-05: lawyers_db.py — id, nombre, email, telefono, whatsapp_numero, colegiatura, especialidades, activo)
+- [x] Crear modelo EstudioJuridico (2026-04-05: tabla estudios — id, nombre, ruc, direccion, plan, fecha_creacion)
+- [x] Relación: Caso → Abogado → Estudio (2026-04-05: columna abogado_id en casos via migration segura)
+- [x] CRUD de abogados en dashboard (2026-04-05: endpoints GET/POST/PUT/DELETE /api/abogados y /api/estudios)
 - [x] Página de Clientes en dashboard (2026-04-04: extrae clientes de casos, búsqueda, cards con stats)
 - [ ] Perfil de abogado (foto, bio, especialidades)
 - [x] Página de Configuración (2026-04-04: perfil, estudio jurídico, notificaciones con toggles)
@@ -108,7 +101,7 @@
 ### 2.3 Métricas del Dashboard
 - [x] Gráfico de casos por estado (pie chart) (2026-04-04: recharts PieChart con STATUS_COLORS)
 - [x] Gráfico de casos por mes (bar chart) (2026-04-04: recharts BarChart vertical por mes)
-- [ ] Tiempo promedio de respuesta
+- [x] Tiempo promedio de respuesta (2026-04-05: avgResponseTime en reportes, card con promedio/min/max/total)
 - [x] Casos urgentes (próximos 7 días) (2026-04-04: lista con links a detalle de caso)
 - [x] Clientes más activos (2026-04-04: top 5 clientes por número de casos en reportes)
 - [x] Exportar reportes a PDF (2026-04-04: html2canvas + jsPDF, header con branding Minka, multi-página)
@@ -116,11 +109,12 @@
 - [x] Filtro por periodo (30d, 3m, 6m, todo) (2026-04-04: selector de periodo en reportes)
 
 ### 2.4 Comandos WhatsApp para Abogado
-- [ ] Detectar número de abogado vs cliente
-- [ ] Comando: "estado 12345" → info del caso
-- [ ] Comando: "casos hoy" → lista de pendientes
-- [ ] Comando: "actualizar 12345 en_audiencia" → cambiar estado
-- [ ] Comando: "notificar 12345" → enviar update al cliente
+- [x] Detectar número de abogado vs cliente (2026-04-05: lawyer_commands.py — es_abogado() busca en tabla abogados)
+- [x] Comando: "estado {expediente}" → info del caso (2026-04-05)
+- [x] Comando: "casos hoy" → lista de pendientes (2026-04-05)
+- [x] Comando: "actualizar {expediente} {estado}" → cambiar estado (2026-04-05)
+- [x] Comando: "notificar {expediente}" → enviar update al cliente (2026-04-05)
+- [x] Comandos extra: "buscar {nombre}", "casos pendientes", "ayuda" (2026-04-05)
 
 ---
 

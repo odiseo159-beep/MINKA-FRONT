@@ -8,7 +8,13 @@
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "dev:clean": "bash scripts/dev-clean.sh",
+    "deploy": "bash scripts/deploy.sh",
+    "seed": "npx tsx scripts/seed-demo.ts",
+    "seed:clean": "npx tsx scripts/seed-demo.ts --clean",
+    "check-api": "npx tsx scripts/check-api.ts",
+    "quick-case": "npx tsx scripts/quick-case.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.4.2",
@@ -47,6 +53,7 @@
     "jsdom": "^29.0.1",
     "postcss": "^8.4.38",
     "tailwindcss": "^3.4.3",
+    "tsx": "^4.21.0",
     "typescript": "^5.4.5",
     "vitest": "^4.1.2"
   }

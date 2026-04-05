@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { 
-  Scale, 
-  LayoutDashboard, 
-  FolderOpen, 
-  Calendar, 
-  Users, 
-  BarChart3, 
+import {
+  Scale,
+  LayoutDashboard,
+  FolderOpen,
+  Calendar,
+  Users,
+  BarChart3,
+  Bell,
   Settings,
   MessageCircle
 } from "lucide-react";
@@ -19,6 +20,7 @@ const navItems = [
   { href: "/dashboard/calendario", icon: Calendar, label: "Calendario" },
   { href: "/dashboard/clientes", icon: Users, label: "Clientes" },
   { href: "/dashboard/reportes", icon: BarChart3, label: "Reportes" },
+  { href: "/dashboard/notificaciones", icon: Bell, label: "Notificaciones" },
   { href: "/dashboard/configuracion", icon: Settings, label: "Configuración" },
 ];
 

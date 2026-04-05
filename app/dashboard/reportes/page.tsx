@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useRef, useCallback } from "react";
 import Link from "next/link";
-import { BarChart3, AlertTriangle, ArrowRight, Calendar, Users, Download } from "lucide-react";
+import { BarChart3, AlertTriangle, ArrowRight, Calendar, Users, Download, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import {
@@ -25,6 +25,7 @@ import {
   urgentCases,
   topClients,
   filterByPeriod,
+  avgResponseTime,
 } from "@/lib/report-utils";
 import { STATUS_COLORS, STATUS_LABELS } from "@/types";
 
@@ -49,6 +50,7 @@ export default function ReportesPage() {
   const monthData = useMemo(() => casesByMonth(filtered), [filtered]);
   const urgent = useMemo(() => urgentCases(cases), [cases]);
   const topClientsData = useMemo(() => topClients(filtered), [filtered]);
+  const responseTime = useMemo(() => avgResponseTime(filtered), [filtered]);
 
   const exportPDF = useCallback(async () => {
     if (!reportRef.current) return;
@@ -195,6 +197,36 @@ export default function ReportesPage() {
           value={filtered.filter((c) => c.estado === "resuelto").length}
         />
         <StatCard label="Urgentes (7d)" value={urgent.length} highlight={urgent.length > 0} />
+      </div>
+
+      {/* Response time card */}
+      <div className="bg-white rounded-xl border border-gray-200 p-5 mb-6">
+        <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <Clock className="w-4 h-4 text-indigo-500" />
+          Tiempo promedio de respuesta
+        </h3>
+        {responseTime.totalResueltos === 0 ? (
+          <p className="text-sm text-gray-400 text-center py-4">Sin datos — no hay casos resueltos o archivados</p>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div>
+              <p className="text-sm text-gray-500">Promedio</p>
+              <p className="text-2xl font-bold text-indigo-600 mt-1">{responseTime.promedioDias} <span className="text-sm font-normal text-gray-400">días</span></p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Mínimo</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">{responseTime.minimoDias} <span className="text-sm font-normal text-gray-400">días</span></p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Máximo</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">{responseTime.maximoDias} <span className="text-sm font-normal text-gray-400">días</span></p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Total resueltos</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">{responseTime.totalResueltos}</p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Charts grid */}

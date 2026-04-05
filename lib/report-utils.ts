@@ -136,6 +136,49 @@ export function topClients(cases: Case[], limit = 5): TopClient[] {
     .slice(0, limit);
 }
 
+export interface ResponseTimeData {
+  promedioDias: number;
+  minimoDias: number;
+  maximoDias: number;
+  totalResueltos: number;
+}
+
+/**
+ * Calculates average response time (in days) for resolved/archived cases
+ */
+export function avgResponseTime(cases: Case[]): ResponseTimeData {
+  const resolved = cases.filter(
+    (c) =>
+      ["resuelto", "archivado"].includes(c.estado) &&
+      c.fecha_creacion &&
+      c.fecha_actualizacion
+  );
+
+  if (resolved.length === 0) {
+    return { promedioDias: 0, minimoDias: 0, maximoDias: 0, totalResueltos: 0 };
+  }
+
+  const daysArr = resolved.map((c) => {
+    const created = new Date(
+      c.fecha_creacion!.includes("T") ? c.fecha_creacion! : c.fecha_creacion!.replace(" ", "T")
+    );
+    const updated = new Date(
+      c.fecha_actualizacion!.includes("T")
+        ? c.fecha_actualizacion!
+        : c.fecha_actualizacion!.replace(" ", "T")
+    );
+    return Math.max(0, (updated.getTime() - created.getTime()) / (1000 * 60 * 60 * 24));
+  });
+
+  const sum = daysArr.reduce((a, b) => a + b, 0);
+  return {
+    promedioDias: Math.round((sum / daysArr.length) * 10) / 10,
+    minimoDias: Math.round(Math.min(...daysArr) * 10) / 10,
+    maximoDias: Math.round(Math.max(...daysArr) * 10) / 10,
+    totalResueltos: resolved.length,
+  };
+}
+
 /**
  * Filters cases by a time period (last N days)
  */

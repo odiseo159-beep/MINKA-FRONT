@@ -32,7 +32,11 @@ export default function CaseDetailPage() {
     if (!confirm(`¿Enviar notificación a ${caso.nombre_cliente} por WhatsApp?`)) return;
     
     try {
-      await notifyClient.mutateAsync(caso.id);
+      await notifyClient.mutateAsync({
+        id: caso.id,
+        nombreCliente: caso.nombre_cliente,
+        telefono: caso.telefono,
+      });
       toast({ title: "Notificación enviada", description: `Se notificó a ${caso.nombre_cliente}` });
     } catch (err) {
       toast({ 

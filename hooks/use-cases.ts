@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { casesApi, calculateStats } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
+import { useNotificationStore } from "@/lib/notification-store";
 import type { Case, CaseFormData, CaseFilters } from "@/types";
 
 // Query keys
@@ -91,9 +92,30 @@ export function useDeleteCase() {
 // Notify client
 export function useNotifyClient() {
   const token = useAuthStore((state) => state.token);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   return useMutation({
-    mutationFn: (id: number) => casesApi.notify(id, token || undefined),
+    mutationFn: ({ id }: { id: number; nombreCliente: string; telefono: string }) =>
+      casesApi.notify(id, token || undefined),
+    onSuccess: (_, variables) => {
+      addNotification({
+        casoId: variables.id,
+        nombreCliente: variables.nombreCliente,
+        telefono: variables.telefono,
+        tipo: "whatsapp",
+        estado: "enviado",
+      });
+    },
+    onError: (error: Error, variables) => {
+      addNotification({
+        casoId: variables.id,
+        nombreCliente: variables.nombreCliente,
+        telefono: variables.telefono,
+        tipo: "whatsapp",
+        estado: "error",
+        mensaje: error.message || "Error al enviar notificación",
+      });
+    },
   });
 }
 
