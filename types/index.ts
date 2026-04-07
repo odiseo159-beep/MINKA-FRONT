@@ -106,6 +106,36 @@ export interface DashboardStats {
 }
 
 // ============================================
+// CALCULADORA DE PLAZOS
+// ============================================
+export interface CalcPlazoRequest {
+  fecha_inicio: string;
+  dias: number;
+  tipo: "habiles" | "calendario";
+}
+
+export interface FeriadoExcluido {
+  fecha: string;
+  nombre: string;
+}
+
+export interface CalcPlazoResponse {
+  fecha_inicio: string;
+  dias_solicitados: number;
+  tipo: string;
+  fecha_vencimiento: string;
+  dias_habiles: number;
+  dias_calendario: number;
+  feriados_excluidos: FeriadoExcluido[];
+}
+
+export interface Feriado {
+  fecha: string;
+  nombre: string;
+  tipo?: string;
+}
+
+// ============================================
 // FILTERS
 // ============================================
 export interface CaseFilters {

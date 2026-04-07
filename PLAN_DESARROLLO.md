@@ -113,55 +113,65 @@
 
 ---
 
-## 🎯 Fase 3: Base de Conocimiento Legal (Q4 2026) — 10 semanas
+## 🎯 Fase 3: Base de Conocimiento Legal (Q4 2026)
+
+> **Alcance definido**: Derecho Penal + Civil/Familia como base inicial.
+> El derecho en general es demasiado amplio — se expande por ramas según demanda de abogados.
+> Los scrapers son necesarios para mantener la normativa actualizada ante cambios legislativos.
 
 ### 3.1 Estructura de Conocimiento
-- [ ] Crear carpeta knowledge/penal/delitos/
-- [ ] Crear carpeta knowledge/penal/procesos/
-- [ ] Crear carpeta knowledge/normativa/
-- [ ] Crear carpeta knowledge/utils/
+- [x] Base consolidada en procesos_legales.json (minka-legal/knowledge/) — 16 procesos, 116 etapas
+- [ ] Cargar normativa base desde documentos oficiales (CP, CPP, CC, CPC, Ley 30364, CNA, Ley 29497)
+  - **Pendiente**: Daniel proveerá los PDFs/documentos de los códigos que tiene
+  - Propósito: corregir plazos/artículos del JSON actual + base para RAG
+- [ ] Carpeta knowledge/normativa/ (leyes completas procesadas para RAG)
+- [ ] Carpeta knowledge/jurisprudencia/ (para RAG — fase posterior)
 
-### 3.2 Delitos Penales (prioridad)
-- [x] Estafa (Art. 196 CP) — kb_proceso_penal_estafa.json
-- [ ] Robo agravado (Art. 189 CP)
-- [ ] Hurto (Art. 185 CP)
-- [ ] Apropiación ilícita (Art. 190 CP)
-- [ ] Omisión asistencia familiar (Art. 149 CP)
-- [ ] Lesiones (Art. 121-124 CP)
-- [ ] Violencia familiar (Ley 30364)
-- [ ] Feminicidio (Art. 108-B CP)
-- [ ] Violación sexual (Art. 170 CP)
-- [ ] Homicidio (Art. 106-109 CP)
+### 3.2 Delitos Penales ✅ (estructura inicial completa)
+- [x] Estafa (Art. 196 CP) — clave "penal"
+- [x] Robo agravado (Art. 189 CP) — 2026-04-07: clave "penal_robo", 8 etapas
+- [x] Hurto (Art. 185-186 CP) — 2026-04-07: clave "penal_hurto", 7 etapas
+- [x] Apropiación ilícita (Art. 190 CP) — 2026-04-07: clave "penal_apropiacion", 6 etapas
+- [x] Omisión asistencia familiar (Art. 149 CP) — 2026-04-07: clave "penal_omision_familiar", 6 etapas
+- [x] Lesiones (Art. 121-124 CP) — 2026-04-07: clave "penal_lesiones", 6 etapas
+- [x] Violencia familiar (Ley 30364) — 2026-04-07: clave "penal_violencia_familiar", 6 etapas
+- [x] Feminicidio (Art. 108-B CP) — 2026-04-07: clave "penal_feminicidio", 6 etapas
+- [x] Violación sexual (Art. 170 CP) — 2026-04-07: clave "penal_violacion", 7 etapas
+- [x] Homicidio (Art. 106-109 CP) — 2026-04-07: clave "penal_homicidio", 7 etapas
+- [ ] Revisión/corrección con normativa real (pendiente documentos)
 
-### 3.3 Otros Procesos
-- [x] Proceso laboral — kb_proceso_laboral.json
-- [x] Alimentos — kb_proceso_familia_alimentos.json
-- [x] Desalojo — kb_proceso_civil_desalojo.json
-- [ ] Divorcio
-- [ ] Tenencia y régimen de visitas
-- [ ] Sucesiones
+### 3.3 Procesos Civiles/Familia ✅ (estructura inicial completa)
+- [x] Proceso laboral — clave "laboral"
+- [x] Alimentos — clave "familia_alimentos"
+- [x] Desalojo — clave "civil_desalojo"
+- [x] Divorcio — 2026-04-07: clave "familia_divorcio", 7 etapas
+- [x] Tenencia y régimen de visitas — 2026-04-07: clave "familia_tenencia", 5 etapas
+- [x] Sucesiones — 2026-04-07: clave "civil_sucesiones", 6 etapas
+- [ ] Revisión/corrección con normativa real (pendiente documentos)
 
-### 3.4 Calculadora de Plazos
-- [x] Crear feriados_peru.json (2026-04-07: 2024-2027, feriados oficiales peruanos)
-- [x] Función calcular_dias_habiles() (2026-04-07: deadline_calculator.py, descuenta fines de semana y feriados)
-- [x] Función calcular_vencimiento() (2026-04-07: endpoint POST /api/calcular-plazo, GET /api/feriados)
-- [ ] Integrar en asesor legal del dashboard
-- [ ] Alertas automáticas de plazos
+### 3.4 Calculadora de Plazos ✅
+- [x] Crear feriados_peru.json (2026-04-07)
+- [x] Función calcular_dias_habiles() (2026-04-07)
+- [x] Endpoint POST /api/calcular-plazo, GET /api/feriados (2026-04-07)
+- [x] Integrar en dashboard (2026-04-07: /dashboard/calculadora)
+- [ ] Alertas automáticas de plazos (notificar al abogado X días antes del vencimiento)
 
-### 3.5 RAG Legal (Retrieval Augmented Generation)
-- [ ] Instalar ChromaDB
-- [ ] Instalar sentence-transformers
-- [ ] Crear embeddings de normativa
-- [ ] Crear embeddings de jurisprudencia
-- [ ] Búsqueda semántica en Claude prompts
-- [ ] Citar fuentes en respuestas del bot
+### 3.5 RAG Legal — Retrieval Augmented Generation
+> Depende de tener la normativa cargada (3.1)
+- [ ] Instalar ChromaDB + sentence-transformers en backend
+- [ ] Procesar y chunkar documentos de normativa
+- [ ] Crear embeddings y cargar en ChromaDB
+- [ ] Integrar búsqueda semántica en Claude prompts
+- [ ] Citar artículos/fuentes en respuestas del bot
 
-### 3.6 Scraping de Fuentes Oficiales
-- [ ] Scraper El Peruano (normas nuevas)
-- [ ] Scraper SPIJ (normativa vigente)
-- [ ] Scraper Poder Judicial (jurisprudencia)
-- [ ] Scraper Tribunal Constitucional
-- [ ] Pipeline de actualización automática
+### 3.6 Scraping — Actualización Automática de Normativa
+> Necesario para mantener vigencia ante cambios legislativos
+> Fuentes prioritarias: El Peruano (normas nuevas) y SPIJ (texto vigente consolidado)
+- [ ] Definir estrategia: ¿SPIJ API oficial vs scraping web?
+- [ ] Scraper El Peruano — normas nuevas publicadas
+- [ ] Scraper SPIJ — versión vigente de cada código
+- [ ] Scraper Poder Judicial — jurisprudencia (fase posterior)
+- [ ] Pipeline: scraping → procesamiento → actualización ChromaDB automática
 
 ---
 

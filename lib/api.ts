@@ -1,10 +1,13 @@
-import type { 
-  Case, 
-  CaseFormData, 
-  LoginCredentials, 
-  LoginResponse, 
+import type {
+  Case,
+  CaseFormData,
+  LoginCredentials,
+  LoginResponse,
   VerifyResponse,
-  User 
+  User,
+  CalcPlazoRequest,
+  CalcPlazoResponse,
+  Feriado,
 } from "@/types";
 
 // API base URL - from environment variable
@@ -145,6 +148,23 @@ export const estudiosApi = {
     fetchAPI<any>("/api/estudios", { method: "POST", token, body: JSON.stringify(data) }),
   update: async (id: number, data: Record<string, any>, token?: string) =>
     fetchAPI<any>(`/api/estudios/${id}`, { method: "PUT", token, body: JSON.stringify(data) }),
+};
+
+// ============================================
+// CALCULADORA DE PLAZOS
+// ============================================
+export const calculadoraApi = {
+  calcular: async (data: CalcPlazoRequest, token?: string): Promise<CalcPlazoResponse> => {
+    return fetchAPI<CalcPlazoResponse>("/api/calcular-plazo", {
+      method: "POST",
+      token,
+      body: JSON.stringify(data),
+    });
+  },
+
+  getFeriados: async (token?: string): Promise<{ feriados: Feriado[] }> => {
+    return fetchAPI<{ feriados: Feriado[] }>("/api/feriados", { token });
+  },
 };
 
 // ============================================

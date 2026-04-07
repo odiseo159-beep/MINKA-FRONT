@@ -10,7 +10,8 @@ import {
   BarChart3,
   Bell,
   Settings,
-  MessageCircle
+  MessageCircle,
+  Calculator,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -20,6 +21,7 @@ const navItems = [
   { href: "/dashboard/calendario", icon: Calendar, label: "Calendario" },
   { href: "/dashboard/clientes", icon: Users, label: "Clientes" },
   { href: "/dashboard/reportes", icon: BarChart3, label: "Reportes" },
+  { href: "/dashboard/calculadora", icon: Calculator, label: "Calculadora" },
   { href: "/dashboard/notificaciones", icon: Bell, label: "Notificaciones" },
   { href: "/dashboard/configuracion", icon: Settings, label: "Configuración" },
 ];
