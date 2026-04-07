@@ -126,6 +126,28 @@ export const casesApi = {
 };
 
 // ============================================
+// ABOGADOS API
+// ============================================
+export const abogadosApi = {
+  getAll: async (token?: string) => fetchAPI<any[]>("/api/abogados", { token }),
+  create: async (data: Record<string, any>, token?: string) =>
+    fetchAPI<any>("/api/abogados", { method: "POST", token, body: JSON.stringify(data) }),
+  update: async (id: number, data: Record<string, any>, token?: string) =>
+    fetchAPI<any>(`/api/abogados/${id}`, { method: "PUT", token, body: JSON.stringify(data) }),
+};
+
+// ============================================
+// ESTUDIOS API
+// ============================================
+export const estudiosApi = {
+  getAll: async (token?: string) => fetchAPI<any[]>("/api/estudios", { token }),
+  create: async (data: Record<string, any>, token?: string) =>
+    fetchAPI<any>("/api/estudios", { method: "POST", token, body: JSON.stringify(data) }),
+  update: async (id: number, data: Record<string, any>, token?: string) =>
+    fetchAPI<any>(`/api/estudios/${id}`, { method: "PUT", token, body: JSON.stringify(data) }),
+};
+
+// ============================================
 // STATS (calculated client-side for now)
 // ============================================
 export function calculateStats(cases: Case[]) {

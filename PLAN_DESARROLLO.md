@@ -80,22 +80,17 @@
 - [x] Relación: Caso → Abogado → Estudio (2026-04-05: columna abogado_id en casos via migration segura)
 - [x] CRUD de abogados en dashboard (2026-04-05: endpoints GET/POST/PUT/DELETE /api/abogados y /api/estudios)
 - [x] Página de Clientes en dashboard (2026-04-04: extrae clientes de casos, búsqueda, cards con stats)
-- [ ] Perfil de abogado (foto, bio, especialidades)
+- [x] Perfil de abogado (2026-04-07: configuracion conectada al backend GET/PUT /api/abogados + /api/estudios, skeleton de carga)
 - [x] Página de Configuración (2026-04-04: perfil, estudio jurídico, notificaciones con toggles)
 
 ### 2.2 Calendario Inteligente
-- [ ] Crear modelo EventoCalendario
-  ```python
-  # id, caso_id, abogado_id, titulo, fecha_hora,
-  # tipo (audiencia/plazo/reunion/vencimiento),
-  # recordatorio_dias, notificado, notas
-  ```
+- [x] Crear modelo EventoCalendario (2026-04-07: events_db.py — tabla eventos_calendario, CRUD endpoints /api/eventos)
 - [x] Vista mensual del calendario (2026-04-04: CalendarView con date-fns, grid responsive, navegación mes, badges por estado)
 - [x] Vista semanal (2026-04-04: toggle Mes/Semana/Día, grid 7 columnas con detalle de eventos)
 - [x] Vista diaria (2026-04-04: lista detallada de eventos con links a caso)
 - [x] Auto-crear eventos desde casos (próxima_fecha) (2026-04-04: agrupa casos por proxima_fecha automáticamente)
-- [ ] Alertas 1/3/7 días antes
-- [ ] Notificación al abogado por WhatsApp
+- [x] Alertas 1/3/7 días antes (2026-04-07: APScheduler cron 8am Lima, envía solo en días exactos 1/3/7)
+- [x] Notificación al abogado por WhatsApp (2026-04-07: enviar_alertas_eventos() via Whapi al whatsapp_numero del abogado)
 - [ ] (Opcional) Sync con Google Calendar
 
 ### 2.3 Métricas del Dashboard
@@ -147,9 +142,9 @@
 - [ ] Sucesiones
 
 ### 3.4 Calculadora de Plazos
-- [ ] Crear feriados_peru.json (2024-2030)
-- [ ] Función calcular_dias_habiles()
-- [ ] Función calcular_vencimiento()
+- [x] Crear feriados_peru.json (2026-04-07: 2024-2027, feriados oficiales peruanos)
+- [x] Función calcular_dias_habiles() (2026-04-07: deadline_calculator.py, descuenta fines de semana y feriados)
+- [x] Función calcular_vencimiento() (2026-04-07: endpoint POST /api/calcular-plazo, GET /api/feriados)
 - [ ] Integrar en asesor legal del dashboard
 - [ ] Alertas automáticas de plazos
 

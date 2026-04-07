@@ -1,12 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Settings, User, Bell, Building2, Save, Check } from "lucide-react";
 import { useAuthStore } from "@/lib/auth-store";
+import { abogadosApi, estudiosApi } from "@/lib/api";
 
 export default function ConfiguracionPage() {
   const user = useAuthStore((s) => s.user);
+  const token = useAuthStore((s) => s.token);
+
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [abogadoId, setAbogadoId] = useState<number | null>(null);
+  const [estudioId, setEstudioId] = useState<number | null>(null);
 
   const [perfil, setPerfil] = useState({
     nombre: user?.nombre || "Daniel",
@@ -29,11 +36,86 @@ export default function ConfiguracionPage() {
     resumenSemanal: false,
   });
 
-  const handleSave = () => {
-    // TODO: Connect to backend API
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [abogados, estudios] = await Promise.all([
+          abogadosApi.getAll(token || undefined),
+          estudiosApi.getAll(token || undefined),
+        ]);
+        if (abogados.length > 0) {
+          const a = abogados[0];
+          setAbogadoId(a.id);
+          setPerfil({
+            nombre: a.nombre || user?.nombre || "",
+            email: a.email || user?.email || "",
+            telefono: a.telefono || "",
+            colegiatura: a.colegiatura || "",
+          });
+        }
+        if (estudios.length > 0) {
+          const e = estudios[0];
+          setEstudioId(e.id);
+          setEstudio({
+            nombre: e.nombre || "",
+            ruc: e.ruc || "",
+            direccion: e.direccion || "",
+            plan: e.plan || "starter",
+          });
+        }
+      } catch (err) {
+        // silently use defaults if backend fails
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadData();
+  }, []); // only on mount
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      // Save abogado profile
+      const perfilData = { ...perfil };
+      if (abogadoId) {
+        await abogadosApi.update(abogadoId, perfilData, token || undefined);
+      } else {
+        const created = await abogadosApi.create(perfilData, token || undefined);
+        setAbogadoId(created.id);
+      }
+      // Save estudio
+      const estudioData = { nombre: estudio.nombre, ruc: estudio.ruc, direccion: estudio.direccion };
+      if (estudioId) {
+        await estudiosApi.update(estudioId, estudioData, token || undefined);
+      } else {
+        const created = await estudiosApi.create(estudioData, token || undefined);
+        setEstudioId(created.id);
+      }
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (err) {
+      console.error("Error guardando configuración:", err);
+    } finally {
+      setSaving(false);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="animate-pulse max-w-3xl space-y-6">
+        <div className="h-8 bg-gray-200 rounded w-48" />
+        {[1, 2].map((i) => (
+          <div key={i} className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
+            <div className="h-5 bg-gray-200 rounded w-32" />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="h-10 bg-gray-100 rounded" />
+              <div className="h-10 bg-gray-100 rounded" />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="animate-fadeIn max-w-3xl">
@@ -178,12 +260,18 @@ export default function ConfiguracionPage() {
         <div className="flex justify-end">
           <button
             onClick={handleSave}
-            className="flex items-center gap-2 px-5 py-2.5 bg-minka-500 text-white rounded-lg hover:bg-minka-600 transition-colors font-medium text-sm"
+            disabled={saving || isLoading}
+            className="flex items-center gap-2 px-5 py-2.5 bg-minka-500 text-white rounded-lg hover:bg-minka-600 transition-colors font-medium text-sm disabled:opacity-50"
           >
             {saved ? (
               <>
                 <Check className="w-4 h-4" />
                 Guardado
+              </>
+            ) : saving ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Guardando...
               </>
             ) : (
               <>
