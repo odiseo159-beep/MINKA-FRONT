@@ -56,6 +56,9 @@
 - [x] Búsqueda con debounce (2026-04-04: 300ms debounce hook)
 - [x] Loading skeletons mejorados (2026-04-04: skeletons que replican layout real)
 - [x] Empty states con ilustraciones (2026-04-04: SVG inline para no-cases, no-results, error)
+- [x] Filas de tabla clickeables (2026-04-12: click en fila → detalle del caso, stopPropagation en botones de acción)
+- [x] Cards móviles clickeables (2026-04-12: click en card → detalle, hover con shadow)
+- [x] Upload de documentos .docx para pre-llenar formulario (2026-04-12: mammoth.js client-side, regex extraction, drag-and-drop)
 
 ### 1.4 Notificaciones Proactivas
 - [x] Endpoint POST /api/casos/:id/notificar funcionando (2026-04-04: creado en dashboard_api.py, envía WhatsApp via Whapi)
@@ -182,6 +185,39 @@
 
 ---
 
+## 🎯 Fase 3.5: Preparar para Prueba con Abogados (Q4 2026)
+
+> **Objetivo**: Hacer el sistema lo suficientemente realista para que un abogado lo pruebe con casos reales.
+
+### 3.5.1 Registro de Cuentas
+- [ ] Crear endpoint `POST /auth/register` en backend FastAPI
+- [ ] Crear página `app/registro/page.tsx` en frontend
+- [ ] Flujo: email + password + datos del abogado (nombre, colegiatura)
+- [ ] Validación de email + password seguro
+- [ ] Email de confirmación (opcional, puede ser manual al inicio)
+
+### 3.5.2 Almacenamiento de Documentos
+- [ ] Definir proveedor de cloud storage (S3/GCS/Cloudflare R2)
+- [ ] Crear endpoints backend para upload/download de archivos
+- [ ] Vincular documentos a casos (tabla documentos_caso)
+- [ ] Límites de almacenamiento por plan
+- [ ] Visor de documentos en el detalle del caso
+
+### 3.5.3 Integración con Sistemas Externos
+- [ ] Google Drive: OAuth 2.0 + API de Google Drive
+- [ ] Importar documentos desde Google Drive al caso
+- [ ] (Futuro) Conexión con sistemas propios de estudios de abogados
+
+### 3.5.4 Protección de Datos
+- [ ] Cumplimiento Ley N° 29733 (Protección de Datos Personales, Perú)
+- [ ] Política de privacidad en la plataforma
+- [ ] Consentimiento informado de clientes
+- [ ] Encriptación de datos sensibles en reposo
+- [ ] Secreto profesional del abogado: segregación de datos por estudio
+- [ ] Términos y condiciones de uso
+
+---
+
 ## 🎯 Fase 4: Escalar y Monetizar (2027)
 
 ### 4.1 Multi-tenancy
@@ -245,23 +281,29 @@
 
 ```
 2026
-├── Abr-May: Fase 1 (MVP consolidado)
-│   ├── [AHORA] Frontend Next.js funcionando
-│   ├── Auth integrado en backend
-│   └── Deploy en Vercel + Railway
+├── Abr: Fase 1 (MVP consolidado) ✅
+│   ├── Frontend Next.js funcionando + Deploy Vercel
+│   ├── Auth integrado en backend + Deploy Railway
+│   └── Upload de documentos .docx para crear casos
 │
-├── Jun-Ago: Fase 2 (Plataforma abogado)
-│   ├── Modelo abogado/estudio
-│   ├── Calendario inteligente
-│   └── Métricas dashboard
+├── Abr-May: Fase 2 (Plataforma abogado) ✅
+│   ├── Modelo abogado/estudio + CRUD
+│   ├── Calendario inteligente con alertas
+│   └── Métricas dashboard + reportes PDF
 │
-└── Sep-Dic: Fase 3 (Knowledge base)
-    ├── 10+ delitos documentados
-    ├── RAG con ChromaDB
-    └── Calculadora de plazos
-
+├── Abr: Fase 3 (Knowledge base) ✅
+│   ├── 16 procesos legales + 10 delitos documentados
+│   ├── RAG con ChromaDB (3,830 artículos)
+│   └── Calculadora de plazos + alertas automáticas
+│
+├── [AHORA] Fase 3.5 (Prueba con abogados)
+│   ├── Registro de cuentas (backend + frontend)
+│   ├── Almacenamiento de documentos (cloud storage)
+│   ├── Protección de datos (Ley 29733)
+│   └── Integración Google Drive (futuro)
+│
 2027
-├── Q1: Fase 4 (Multi-tenant)
+├── Q1: Fase 4 (Multi-tenant + monetización)
 ├── Q2: Lanzamiento público
 └── Q3+: Escalar
 ```

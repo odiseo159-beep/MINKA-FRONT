@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { Edit2, MessageSquare } from "lucide-react";
 import { formatDate, formatRelativeTime, getDateUrgencyClass } from "@/lib/utils";
 import { STATUS_LABELS, STATUS_COLORS, CASE_TYPE_LABELS } from "@/types";
@@ -12,8 +13,13 @@ interface CaseCardProps {
 }
 
 export function CaseCard({ caso, onEdit, onNotify }: CaseCardProps) {
+  const router = useRouter();
+
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-3">
+    <div
+      onClick={() => router.push(`/dashboard/casos/${caso.id}`)}
+      className="bg-white rounded-xl border border-gray-200 p-4 space-y-3 cursor-pointer hover:border-gray-300 hover:shadow-sm transition-all"
+    >
       {/* Header: name + status */}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
@@ -43,14 +49,14 @@ export function CaseCard({ caso, onEdit, onNotify }: CaseCardProps) {
       {/* Actions */}
       <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
         <button
-          onClick={() => onEdit(caso)}
+          onClick={(e) => { e.stopPropagation(); onEdit(caso); }}
           className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
           title="Editar"
         >
           <Edit2 className="w-4 h-4" />
         </button>
         <button
-          onClick={() => onNotify(caso)}
+          onClick={(e) => { e.stopPropagation(); onNotify(caso); }}
           className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
           title="Notificar por WhatsApp"
         >

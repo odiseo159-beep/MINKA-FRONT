@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useCases, useCreateCase, useUpdateCase, useNotifyClient, filterCases } from "@/hooks/use-cases";
 import { useDebounce } from "@/hooks/use-debounce";
 import { TableRowSkeleton } from "@/components/skeletons";
@@ -39,6 +39,7 @@ export default function CasosPage() {
 
 function CasosContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const { data: cases, isLoading, error } = useCases();
   const createCase = useCreateCase();
   const updateCase = useUpdateCase();
@@ -220,7 +221,11 @@ function CasosContent() {
                 </tr>
               ) : (
                 pagination.paginatedItems.map((caso) => (
-                  <tr key={caso.id} className="hover:bg-gray-50 transition-colors">
+                  <tr
+                    key={caso.id}
+                    onClick={() => router.push(`/dashboard/casos/${caso.id}`)}
+                    className="hover:bg-gray-50 transition-colors cursor-pointer"
+                  >
                     <td className="px-6 py-4">
                       <div>
                         <p className="font-medium text-gray-900">{caso.nombre_cliente}</p>
@@ -244,14 +249,14 @@ function CasosContent() {
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
                         <button
-                          onClick={() => handleEdit(caso)}
+                          onClick={(e) => { e.stopPropagation(); handleEdit(caso); }}
                           className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                           title="Editar"
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => handleNotify(caso)}
+                          onClick={(e) => { e.stopPropagation(); handleNotify(caso); }}
                           className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
                           title="Notificar por WhatsApp"
                         >
