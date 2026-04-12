@@ -121,10 +121,17 @@
 
 ### 3.1 Estructura de Conocimiento
 - [x] Base consolidada en procesos_legales.json (minka-legal/knowledge/) — 16 procesos, 116 etapas
-- [ ] Cargar normativa base desde documentos oficiales (CP, CPP, CC, CPC, Ley 30364, CNA, Ley 29497)
-  - **Pendiente**: Daniel proveerá los PDFs/documentos de los códigos que tiene
-  - Propósito: corregir plazos/artículos del JSON actual + base para RAG
-- [ ] Carpeta knowledge/normativa/ (leyes completas procesadas para RAG)
+- [x] Scraper genérico multi-código (2026-04-12: scripts/scrape_normativa.py — soporta --code cp/cpc/cpp/cpp2/cep/const --all --merge-cpp --dry-run --from-file)
+- [x] knowledge/normativa/codigo_penal/ (2026-04-12: 657 arts — CP completo)
+- [x] knowledge/normativa/codigo_procesal_civil/ (2026-04-12: 870 arts — CPC completo)
+- [x] knowledge/normativa/codigo_procesal_penal/ (2026-04-12: 597 arts — CPP completo Arts I-566 incl. sub-arts 68-A, 268-B, etc.)
+- [x] knowledge/normativa/codigo_ejecucion_penal/ (2026-04-12: 162 arts — CEP completo)
+- [x] knowledge/normativa/constitucion/ (2026-04-12: 212 arts — Constitución completa)
+- [x] CC — Código Civil (2026-04-12: 1115 arts, lpderecho.pe)
+- [x] CNA — Código Niños y Adolescentes (2026-04-12: 263 arts, lpderecho.pe)
+- [x] NLPT — Ley 29497 (2026-04-12: 74 arts, lpderecho.pe — parser extendido para <p><strong> headings)
+- [x] Ley 30077 — Crimen Organizado (2026-04-12: 55 arts, PDF local via pdfminer)
+- [x] Ley 30364 — Violencia contra la Mujer (2026-04-12: 55 arts, SPIJ API REST con auth JWT pública)
 - [ ] Carpeta knowledge/jurisprudencia/ (para RAG — fase posterior)
 
 ### 3.2 Delitos Penales ✅ (estructura inicial completa)
@@ -154,15 +161,15 @@
 - [x] Función calcular_dias_habiles() (2026-04-07)
 - [x] Endpoint POST /api/calcular-plazo, GET /api/feriados (2026-04-07)
 - [x] Integrar en dashboard (2026-04-07: /dashboard/calculadora)
-- [ ] Alertas automáticas de plazos (notificar al abogado X días antes del vencimiento)
+- [x] Alertas automáticas de plazos (2026-04-12: enviar_alertas_plazos() — cron 8:05 AM, alerta 1/3/7 días hábiles antes de proxima_fecha, WhatsApp al abogado del caso)
 
 ### 3.5 RAG Legal — Retrieval Augmented Generation
 > Depende de tener la normativa cargada (3.1)
-- [ ] Instalar ChromaDB + sentence-transformers en backend
-- [ ] Procesar y chunkar documentos de normativa
-- [ ] Crear embeddings y cargar en ChromaDB
-- [ ] Integrar búsqueda semántica en Claude prompts
-- [ ] Citar artículos/fuentes en respuestas del bot
+- [x] Instalar ChromaDB + sentence-transformers en backend (2026-04-12)
+- [x] Procesar y chunkar documentos de normativa (2026-04-12: 3,830 arts tras dedup)
+- [x] Crear embeddings y cargar en ChromaDB (2026-04-12: scripts/index_normativa.py — paraphrase-multilingual-MiniLM-L12-v2)
+- [x] Integrar búsqueda semántica en Claude prompts (2026-04-12: agent/rag.py + brain.py — top-5 arts inyectados en system prompt)
+- [x] Citar artículos/fuentes en respuestas del bot (2026-04-12: formatear_para_prompt() con citacion + texto truncado a 400 chars)
 
 ### 3.6 Scraping — Actualización Automática de Normativa
 > Necesario para mantener vigencia ante cambios legislativos
