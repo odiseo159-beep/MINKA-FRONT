@@ -7,7 +7,9 @@ import { z } from "zod";
 import { Upload, FileText, CheckCircle, AlertCircle, X } from "lucide-react";
 import type { Case, CaseFormData } from "@/types";
 import { STATUS_LABELS, CASE_TYPE_LABELS } from "@/types";
-import { parseDocxFile, type ParsedDocument } from "@/lib/document-parser";
+import { parseDocxFile, mapBackendResponse, type ParsedDocument } from "@/lib/document-parser";
+import { documentApi } from "@/lib/api";
+import { useAuthStore } from "@/lib/auth-store";
 
 // Validation schema
 const caseSchema = z.object({
@@ -38,6 +40,7 @@ export function CaseForm({ initialData, onSubmit, onCancel, isLoading }: CaseFor
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const token = useAuthStore((state) => state.token);
 
   const {
     register,
@@ -61,9 +64,12 @@ export function CaseForm({ initialData, onSubmit, onCancel, isLoading }: CaseFor
   });
 
   const handleFile = useCallback(async (file: File) => {
-    if (!file.name.endsWith(".docx")) {
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    const allowedExts = ["docx", "pdf"];
+
+    if (!ext || !allowedExts.includes(ext)) {
       setUploadState("error");
-      setUploadError("Solo se aceptan archivos .docx");
+      setUploadError("Solo se aceptan archivos .docx y .pdf");
       return;
     }
 
@@ -78,23 +84,34 @@ export function CaseForm({ initialData, onSubmit, onCancel, isLoading }: CaseFor
     setUploadError(null);
 
     try {
-      const result = await parseDocxFile(file);
+      let result: ParsedDocument;
+
+      if (ext === "docx") {
+        // Client-side parsing con mammoth.js
+        result = await parseDocxFile(file);
+      } else {
+        // Server-side parsing via Claude API (PDF, documentos escaneados)
+        const response = await documentApi.extract(file, token || undefined);
+        result = mapBackendResponse(response);
+      }
+
       setParseResult(result);
       setUploadState("success");
 
-      // Pre-llenar el formulario con los datos extraídos
-      // Usamos reset() con los valores actuales + los nuevos para que
-      // react-hook-form actualice tanto su estado interno como el DOM
       const currentValues = getValues();
       reset({
         ...currentValues,
         ...result.caseData,
       });
-    } catch {
+    } catch (err) {
       setUploadState("error");
-      setUploadError("No se pudo leer el documento. Verifica que sea un archivo .docx válido.");
+      setUploadError(
+        err instanceof Error
+          ? err.message
+          : "No se pudo leer el documento. Verifica que sea un archivo válido."
+      );
     }
-  }, [reset, getValues]);
+  }, [reset, getValues, token]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -162,12 +179,12 @@ export function CaseForm({ initialData, onSubmit, onCancel, isLoading }: CaseFor
                 {" "}o arrastra aquí
               </p>
               <p className="text-xs text-gray-400 mt-1">
-                .docx (denuncias, demandas, resoluciones)
+                .docx, .pdf (denuncias, demandas, resoluciones, documentos escaneados)
               </p>
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".docx"
+                accept=".docx,.pdf"
                 className="hidden"
                 onChange={(e) => {
                   const file = e.target.files?.[0];

@@ -2,12 +2,14 @@ import type {
   Case,
   CaseFormData,
   LoginCredentials,
+  RegisterCredentials,
   LoginResponse,
   VerifyResponse,
   User,
   CalcPlazoRequest,
   CalcPlazoResponse,
   Feriado,
+  NormativaResponse,
 } from "@/types";
 
 // API base URL - from environment variable
@@ -47,11 +49,45 @@ async function fetchAPI<T>(
 }
 
 // ============================================
+// FETCH UPLOAD (multipart/form-data)
+// ============================================
+async function fetchUpload<T>(
+  endpoint: string,
+  formData: FormData,
+  token?: string,
+): Promise<T> {
+  const headers: HeadersInit = {
+    ...(token && { Authorization: `Bearer ${token}` }),
+  };
+
+  const response = await fetch(`${API_URL}${endpoint}`, {
+    method: "POST",
+    headers,
+    body: formData,
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: "Error desconocido" }));
+    throw new Error(error.detail || `Error ${response.status}`);
+  }
+
+  return response.json();
+}
+
+// ============================================
 // AUTH API
 // ============================================
 export const authApi = {
   login: async (credentials: LoginCredentials): Promise<LoginResponse> => {
     return fetchAPI<LoginResponse>("/auth/login", {
+      method: "POST",
+      body: JSON.stringify(credentials),
+    });
+  },
+
+  register: async (credentials: RegisterCredentials): Promise<LoginResponse> => {
+    return fetchAPI<LoginResponse>("/auth/register", {
       method: "POST",
       body: JSON.stringify(credentials),
     });
@@ -164,6 +200,47 @@ export const calculadoraApi = {
 
   getFeriados: async (token?: string): Promise<{ feriados: Feriado[] }> => {
     return fetchAPI<{ feriados: Feriado[] }>("/api/feriados", { token });
+  },
+};
+
+// ============================================
+// DOCUMENT EXTRACTION API
+// ============================================
+export interface ExtractDocumentResponse {
+  campos: Record<string, string>;
+  faltantes: string[];
+  advertencias: string[];
+  archivo: string;
+  campos_encontrados: number;
+}
+
+export const documentApi = {
+  extract: async (file: File, token?: string): Promise<ExtractDocumentResponse> => {
+    const formData = new FormData();
+    formData.append("archivo", file);
+    return fetchUpload<ExtractDocumentResponse>(
+      "/api/casos/extraer-documento",
+      formData,
+      token,
+    );
+  },
+};
+
+// ============================================
+// NORMATIVA API
+// ============================================
+export const normativaApi = {
+  buscar: async (
+    query: string,
+    codigos?: string[],
+    topK: number = 5,
+    token?: string,
+  ): Promise<NormativaResponse> => {
+    return fetchAPI<NormativaResponse>("/api/normativa/buscar", {
+      method: "POST",
+      token,
+      body: JSON.stringify({ query, codigos, top_k: topK }),
+    });
   },
 };
 

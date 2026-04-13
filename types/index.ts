@@ -75,6 +75,12 @@ export interface LoginCredentials {
   password: string;
 }
 
+export interface RegisterCredentials {
+  email: string;
+  password: string;
+  nombre: string;
+}
+
 export interface LoginResponse {
   access_token: string;
   token_type: string;
@@ -134,6 +140,36 @@ export interface Feriado {
   nombre: string;
   tipo?: string;
 }
+
+// ============================================
+// NORMATIVA
+// ============================================
+export interface NormativaArticulo {
+  citacion: string;
+  texto: string;
+  numero: string;
+  titulo: string;
+  codigo: string;
+}
+
+export interface NormativaResponse {
+  articulos: NormativaArticulo[];
+  total: number;
+  query: string;
+}
+
+export const CODIGO_LABELS: Record<string, string> = {
+  CP: "Código Penal",
+  CPP: "Código Procesal Penal",
+  CPC: "Código Procesal Civil",
+  CC: "Código Civil",
+  CEP: "Código de Ejecución Penal",
+  CNA: "Código de los Niños y Adolescentes",
+  CONST: "Constitución Política del Perú",
+  NLPT: "Nueva Ley Procesal del Trabajo",
+  L30077: "Ley 30077 - Crimen Organizado",
+  L30364: "Ley 30364 - Violencia contra la Mujer",
+};
 
 // ============================================
 // FILTERS

@@ -6,17 +6,18 @@ import { useCase, useUpdateCase, useNotifyClient } from "@/hooks/use-cases";
 import { useToast } from "@/components/ui/use-toast";
 import { formatDate, formatRelativeTime, getDateUrgencyClass } from "@/lib/utils";
 import { STATUS_LABELS, STATUS_COLORS, CASE_TYPE_LABELS } from "@/types";
-import { 
-  ArrowLeft, 
-  Edit2, 
-  MessageSquare, 
-  Phone, 
-  Calendar, 
+import {
+  ArrowLeft,
+  Edit2,
+  MessageSquare,
+  Phone,
+  Calendar,
   FileText,
   Clock,
   User,
   Scale
 } from "lucide-react";
+import { NormativaPanel } from "@/components/normativa-panel";
 
 export default function CaseDetailPage() {
   const params = useParams();
@@ -196,6 +197,9 @@ export default function CaseDetailPage() {
               </p>
             </div>
           )}
+
+          {/* Normativa aplicable */}
+          <NormativaPanel tipoCaso={caso.tipo_caso} notas={caso.notas} />
         </div>
 
         {/* Sidebar */}

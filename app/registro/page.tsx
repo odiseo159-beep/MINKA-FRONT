@@ -4,14 +4,16 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuthStore } from "@/lib/auth-store";
-import { Scale, Eye, EyeOff, AlertCircle } from "lucide-react";
+import { Scale, Eye, EyeOff, AlertCircle, UserPlus } from "lucide-react";
 
-export default function LoginPage() {
+export default function RegistroPage() {
   const router = useRouter();
-  const login = useAuthStore((state) => state.login);
-  
+  const register = useAuthStore((state) => state.register);
+
+  const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -19,13 +21,24 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    if (password.length < 6) {
+      setError("La contraseña debe tener al menos 6 caracteres");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("Las contraseñas no coinciden");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      await login({ email, password });
+      await register({ nombre, email, password });
       router.push("/dashboard");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al iniciar sesión");
+      setError(err instanceof Error ? err.message : "Error al crear la cuenta");
     } finally {
       setIsLoading(false);
     }
@@ -50,10 +63,10 @@ export default function LoginPage() {
           {/* Welcome text */}
           <div className="mb-8">
             <h2 className="text-xl font-semibold text-gray-900">
-              Bienvenido de vuelta
+              Crea tu cuenta
             </h2>
             <p className="text-gray-600 mt-1">
-              Ingresa tus credenciales para acceder al dashboard
+              Regístrate para gestionar tus casos legales con Minka
             </p>
           </div>
 
@@ -68,8 +81,26 @@ export default function LoginPage() {
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label 
-                htmlFor="email" 
+              <label
+                htmlFor="nombre"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Nombre completo
+              </label>
+              <input
+                id="nombre"
+                type="text"
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-minka-500 focus:border-minka-500 outline-none transition-all"
+                placeholder="Ej: Juan Pérez López"
+                required
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="email"
                 className="block text-sm font-medium text-gray-700 mb-2"
               >
                 Correo electrónico
@@ -86,8 +117,8 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label 
-                htmlFor="password" 
+              <label
+                htmlFor="password"
                 className="block text-sm font-medium text-gray-700 mb-2"
               >
                 Contraseña
@@ -99,8 +130,9 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-minka-500 focus:border-minka-500 outline-none transition-all pr-12"
-                  placeholder="••••••••"
+                  placeholder="Mínimo 6 caracteres"
                   required
+                  minLength={6}
                 />
                 <button
                   type="button"
@@ -116,6 +148,25 @@ export default function LoginPage() {
               </div>
             </div>
 
+            <div>
+              <label
+                htmlFor="confirmPassword"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Confirmar contraseña
+              </label>
+              <input
+                id="confirmPassword"
+                type={showPassword ? "text" : "password"}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-minka-500 focus:border-minka-500 outline-none transition-all"
+                placeholder="Repite tu contraseña"
+                required
+                minLength={6}
+              />
+            </div>
+
             <button
               type="submit"
               disabled={isLoading}
@@ -124,24 +175,23 @@ export default function LoginPage() {
               {isLoading ? (
                 <span className="flex items-center justify-center gap-2">
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Ingresando...
+                  Creando cuenta...
                 </span>
               ) : (
-                "Ingresar"
+                <span className="flex items-center justify-center gap-2">
+                  <UserPlus className="w-5 h-5" />
+                  Crear cuenta
+                </span>
               )}
             </button>
           </form>
 
           {/* Footer */}
           <p className="mt-8 text-center text-sm text-gray-500">
-            ¿No tienes cuenta?{" "}
-            <Link href="/registro" className="text-minka-500 hover:underline font-medium">
-              Crear cuenta
+            ¿Ya tienes cuenta?{" "}
+            <Link href="/login" className="text-minka-500 hover:underline font-medium">
+              Iniciar sesión
             </Link>
-            <span className="mx-2">·</span>
-            <a href="mailto:soporte@simplifai.pe" className="text-minka-500 hover:underline">
-              Soporte
-            </a>
           </p>
         </div>
       </div>
@@ -153,30 +203,30 @@ export default function LoginPage() {
             <Scale className="w-10 h-10" />
           </div>
           <h2 className="text-3xl font-bold mb-4">
-            Mantén a tus clientes informados
+            Tu asistente legal inteligente
           </h2>
           <p className="text-white/80 text-lg">
-            Minka responde consultas de tus clientes sobre sus casos legales 
-            24/7 por WhatsApp, para que puedas enfocarte en lo importante.
+            Gestiona tus casos, mantén informados a tus clientes por WhatsApp
+            y accede a normativa legal relevante con inteligencia artificial.
           </p>
-          
+
           <div className="mt-12 grid grid-cols-3 gap-6 text-center">
-            <div>
-              <div className="text-3xl font-bold">72%</div>
-              <div className="text-sm text-white/70">
-                Clientes quieren más comunicación
-              </div>
-            </div>
             <div>
               <div className="text-3xl font-bold">24/7</div>
               <div className="text-sm text-white/70">
-                Disponibilidad por WhatsApp
+                Atención por WhatsApp
               </div>
             </div>
             <div>
               <div className="text-3xl font-bold">AI</div>
               <div className="text-sm text-white/70">
-                Powered by Claude
+                Normativa inteligente
+              </div>
+            </div>
+            <div>
+              <div className="text-3xl font-bold">PDF</div>
+              <div className="text-sm text-white/70">
+                Sube tus documentos
               </div>
             </div>
           </div>

@@ -201,3 +201,39 @@ function toTitleCase(str: string): string {
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
 }
+
+/**
+ * Convierte la respuesta del backend (POST /api/casos/extraer-documento)
+ * al formato ParsedDocument que usa el formulario de caso.
+ * Se usa para PDFs procesados server-side via Claude API.
+ */
+export function mapBackendResponse(response: {
+  campos: Record<string, string>;
+  faltantes: string[];
+  advertencias: string[];
+}): ParsedDocument {
+  const caseData: Partial<CaseFormData> = {};
+  const fieldsFound: string[] = [];
+
+  const fieldKeys: (keyof CaseFormData)[] = [
+    "nombre_cliente", "telefono", "expediente", "tipo_caso",
+    "estado", "documentos_pendientes", "proxima_fecha", "proxima_accion", "notas",
+  ];
+
+  for (const field of fieldKeys) {
+    if (response.campos[field]) {
+      (caseData as Record<string, string>)[field] = response.campos[field];
+      fieldsFound.push(field);
+    }
+  }
+
+  if (!caseData.estado) {
+    caseData.estado = "nuevo";
+  }
+
+  return {
+    caseData,
+    rawText: "",
+    fieldsFound,
+  };
+}
