@@ -148,8 +148,15 @@ export function CaseForm({ initialData, onSubmit, onCancel, isLoading }: CaseFor
     documentos_pendientes: "Documentos",
   };
 
+  const handleFormSubmit = useCallback(async (formData: CaseFormData) => {
+    await onSubmit({
+      ...formData,
+      ...(parseResult?.rawText ? { documento_texto: parseResult.rawText } : {}),
+    });
+  }, [onSubmit, parseResult]);
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-5">
       {/* Upload de documento (solo para crear, no editar) */}
       {!initialData && (
         <div className="space-y-2">

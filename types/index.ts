@@ -33,6 +33,7 @@ export interface Case {
   documentos_pendientes?: string;
   notas?: string;
   abogado_asignado?: string;
+  documento_texto?: string;
   fecha_creacion: string;
   fecha_actualizacion: string;
 }
@@ -47,6 +48,7 @@ export interface CaseFormData {
   proxima_accion?: string;
   documentos_pendientes?: string;
   notas?: string;
+  documento_texto?: string;
 }
 
 // ============================================

@@ -245,6 +245,27 @@ export const normativaApi = {
 };
 
 // ============================================
+// CASO CHAT API
+// ============================================
+export interface CasoChatResponse {
+  respuesta: string;
+}
+
+export const casoChatApi = {
+  preguntar: async (
+    casoId: number,
+    pregunta: string,
+    token?: string,
+  ): Promise<CasoChatResponse> => {
+    return fetchAPI<CasoChatResponse>(`/api/casos/${casoId}/chat`, {
+      method: "POST",
+      token,
+      body: JSON.stringify({ pregunta }),
+    });
+  },
+};
+
+// ============================================
 // STATS (calculated client-side for now)
 // ============================================
 export function calculateStats(cases: Case[]) {

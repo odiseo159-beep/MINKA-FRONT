@@ -18,6 +18,7 @@ import {
   Scale
 } from "lucide-react";
 import { NormativaPanel } from "@/components/normativa-panel";
+import { CasoChatPanel } from "@/components/caso-chat-panel";
 
 export default function CaseDetailPage() {
   const params = useParams();
@@ -200,6 +201,12 @@ export default function CaseDetailPage() {
 
           {/* Normativa aplicable */}
           <NormativaPanel tipoCaso={caso.tipo_caso} notas={caso.notas} />
+
+          {/* Chat con IA */}
+          <CasoChatPanel
+            casoId={caso.id}
+            tieneDocumento={!!caso.documento_texto}
+          />
         </div>
 
         {/* Sidebar */}
