@@ -3,6 +3,8 @@
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useCases, useCreateCase, useUpdateCase, useNotifyClient, filterCases } from "@/hooks/use-cases";
+import { casesApi } from "@/lib/api";
+import { useAuthStore } from "@/lib/auth-store";
 import { useDebounce } from "@/hooks/use-debounce";
 import { TableRowSkeleton } from "@/components/skeletons";
 import { EmptyNoCases, EmptyNoResults, EmptyError } from "@/components/empty-states";
@@ -45,6 +47,7 @@ function CasosContent() {
   const updateCase = useUpdateCase();
   const notifyClient = useNotifyClient();
   const { toast } = useToast();
+  const token = useAuthStore((state) => state.token);
 
   const [filters, setFilters] = useState<CaseFilters>(DEFAULT_FILTERS);
   const debouncedSearch = useDebounce(filters.search, 300);
@@ -73,20 +76,29 @@ function CasosContent() {
   };
 
   // Handle form submit
-  const handleSubmit = async (data: CaseFormData) => {
+  const handleSubmit = async (data: CaseFormData, file?: File) => {
     try {
       if (editingCase) {
         await updateCase.mutateAsync({ id: editingCase.id, data });
         toast({ title: "Caso actualizado", description: "Los cambios se guardaron correctamente." });
       } else {
-        await createCase.mutateAsync(data);
-        toast({ title: "Caso creado", description: "El nuevo caso se registró correctamente." });
+        const newCase = await createCase.mutateAsync(data);
+        if (file && newCase?.id) {
+          try {
+            await casesApi.uploadDocument(newCase.id, file, token || undefined);
+            toast({ title: "Caso creado", description: "El caso y el documento se guardaron correctamente." });
+          } catch {
+            toast({ title: "Caso creado", description: "El caso se creó, pero no se pudo subir el documento.", variant: "default" });
+          }
+        } else {
+          toast({ title: "Caso creado", description: "El nuevo caso se registró correctamente." });
+        }
       }
       setIsModalOpen(false);
       setEditingCase(null);
     } catch (err) {
-      toast({ 
-        title: "Error", 
+      toast({
+        title: "Error",
         description: err instanceof Error ? err.message : "No se pudo guardar el caso",
         variant: "destructive"
       });

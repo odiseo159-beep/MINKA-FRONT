@@ -34,6 +34,9 @@ export interface Case {
   notas?: string;
   abogado_asignado?: string;
   documento_texto?: string;
+  documento_url?: string;
+  documento_nombre?: string;
+  documento_tipo?: string;
   fecha_creacion: string;
   fecha_actualizacion: string;
 }

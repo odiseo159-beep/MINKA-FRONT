@@ -26,7 +26,7 @@ const caseSchema = z.object({
 
 interface CaseFormProps {
   initialData?: Case;
-  onSubmit: (data: CaseFormData) => Promise<void>;
+  onSubmit: (data: CaseFormData, file?: File) => Promise<void>;
   onCancel: () => void;
   isLoading?: boolean;
 }
@@ -36,6 +36,7 @@ export function CaseForm({ initialData, onSubmit, onCancel, isLoading }: CaseFor
     "idle" | "parsing" | "success" | "error"
   >("idle");
   const [uploadedFile, setUploadedFile] = useState<string | null>(null);
+  const [fileObject, setFileObject] = useState<File | null>(null);
   const [parseResult, setParseResult] = useState<ParsedDocument | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -81,6 +82,7 @@ export function CaseForm({ initialData, onSubmit, onCancel, isLoading }: CaseFor
 
     setUploadState("parsing");
     setUploadedFile(file.name);
+    setFileObject(file);
     setUploadError(null);
 
     try {
@@ -133,6 +135,7 @@ export function CaseForm({ initialData, onSubmit, onCancel, isLoading }: CaseFor
   const clearUpload = useCallback(() => {
     setUploadState("idle");
     setUploadedFile(null);
+    setFileObject(null);
     setParseResult(null);
     setUploadError(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
@@ -149,11 +152,14 @@ export function CaseForm({ initialData, onSubmit, onCancel, isLoading }: CaseFor
   };
 
   const handleFormSubmit = useCallback(async (formData: CaseFormData) => {
-    await onSubmit({
-      ...formData,
-      ...(parseResult?.rawText ? { documento_texto: parseResult.rawText } : {}),
-    });
-  }, [onSubmit, parseResult]);
+    await onSubmit(
+      {
+        ...formData,
+        ...(parseResult?.rawText ? { documento_texto: parseResult.rawText } : {}),
+      },
+      fileObject || undefined,
+    );
+  }, [onSubmit, parseResult, fileObject]);
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-5">

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useCase, useUpdateCase, useNotifyClient } from "@/hooks/use-cases";
@@ -15,10 +16,13 @@ import {
   FileText,
   Clock,
   User,
-  Scale
+  Scale,
+  Download,
 } from "lucide-react";
 import { NormativaPanel } from "@/components/normativa-panel";
 import { CasoChatPanel } from "@/components/caso-chat-panel";
+import { casesApi } from "@/lib/api";
+import { useAuthStore } from "@/lib/auth-store";
 
 export default function CaseDetailPage() {
   const params = useParams();
@@ -28,6 +32,25 @@ export default function CaseDetailPage() {
   const { data: caso, isLoading, error } = useCase(id);
   const notifyClient = useNotifyClient();
   const { toast } = useToast();
+  const token = useAuthStore((state) => state.token);
+  const [downloadingDoc, setDownloadingDoc] = useState(false);
+
+  const handleDownloadDocument = async () => {
+    if (!caso) return;
+    setDownloadingDoc(true);
+    try {
+      const { url, nombre } = await casesApi.getDocumentUrl(caso.id, token || undefined);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = nombre;
+      a.target = "_blank";
+      a.click();
+    } catch {
+      toast({ title: "Error", description: "No se pudo obtener el enlace de descarga.", variant: "destructive" });
+    } finally {
+      setDownloadingDoc(false);
+    }
+  };
 
   const handleNotify = async () => {
     if (!caso) return;
@@ -173,6 +196,33 @@ export default function CaseDetailPage() {
               </div>
             </div>
           </div>
+
+          {/* Documento almacenado */}
+          {caso.documento_url && (
+            <div className="bg-white rounded-xl border border-gray-200 p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-minka-500" />
+                  <div>
+                    <h2 className="text-sm font-semibold text-gray-900">Documento del caso</h2>
+                    <p className="text-xs text-gray-500 mt-0.5">{caso.documento_nombre || "Documento"}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleDownloadDocument}
+                  disabled={downloadingDoc}
+                  className="flex items-center gap-2 px-3 py-1.5 text-sm border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                >
+                  {downloadingDoc ? (
+                    <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
+                  ) : (
+                    <Download className="w-4 h-4" />
+                  )}
+                  Descargar
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Documents */}
           {caso.documentos_pendientes && (

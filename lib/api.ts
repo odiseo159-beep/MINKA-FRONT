@@ -162,6 +162,23 @@ export const casesApi = {
       token,
     });
   },
+
+  uploadDocument: async (id: number, file: File, token?: string): Promise<Case> => {
+    const formData = new FormData();
+    formData.append("archivo", file);
+    return fetchUpload<Case>(`/api/casos/${id}/documento`, formData, token);
+  },
+
+  getDocumentUrl: async (id: number, token?: string): Promise<{ url: string; nombre: string; tipo: string }> => {
+    return fetchAPI(`/api/casos/${id}/documento`, { token });
+  },
+
+  deleteDocument: async (id: number, token?: string): Promise<Case> => {
+    return fetchAPI<Case>(`/api/casos/${id}/documento`, {
+      method: "DELETE",
+      token,
+    });
+  },
 };
 
 // ============================================
