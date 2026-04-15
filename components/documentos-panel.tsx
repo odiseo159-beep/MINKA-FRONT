@@ -2,7 +2,7 @@
 
 import { useRef, useCallback, useState } from "react";
 import { Upload, FileText, Download, Trash2, Loader2, AlertCircle } from "lucide-react";
-import { useDocumentosCaso, useUploadDocumento, useDeleteDocumento } from "@/hooks/use-documentos";
+import { useDocumentosCaso, useUploadDocumento, useDeleteDocumento, useMigrarLegacyDoc } from "@/hooks/use-documentos";
 import { caseDocumentosApi, casesApi } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
 import { useToast } from "@/components/ui/use-toast";
@@ -40,6 +40,7 @@ export function DocumentosPanel({ casoId, legacyDoc }: DocumentosPanelProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
   const [downloadingLegacy, setDownloadingLegacy] = useState(false);
+  const migrarLegacy = useMigrarLegacyDoc(casoId);
 
   const handleFile = useCallback(
     async (file: File) => {
@@ -184,27 +185,49 @@ export function DocumentosPanel({ casoId, legacyDoc }: DocumentosPanelProps) {
         <div className="space-y-2">
           {/* Documento inicial (sistema anterior) */}
           {legacyDoc && (
-            <div className="flex items-center justify-between px-3 py-2.5 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors">
+            <div className="flex items-center justify-between px-3 py-2.5 rounded-lg border border-amber-100 bg-amber-50 transition-colors">
               <div className="flex items-center gap-3 min-w-0">
-                <span className="text-xs font-bold text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded flex-shrink-0">
+                <span className="text-xs font-bold text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded flex-shrink-0">
                   DOC
                 </span>
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-gray-800 truncate">{legacyDoc.nombre}</p>
-                  <p className="text-xs text-gray-400">Documento inicial</p>
+                  <p className="text-xs text-amber-600">Formato anterior · Migrar para gestión completa</p>
                 </div>
               </div>
-              <button
-                onClick={handleDownloadLegacy}
-                disabled={downloadingLegacy}
-                className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors disabled:opacity-50"
-                title="Descargar"
-              >
-                {downloadingLegacy
-                  ? <Loader2 className="w-4 h-4 animate-spin" />
-                  : <Download className="w-4 h-4" />
-                }
-              </button>
+              <div className="flex items-center gap-1 flex-shrink-0 ml-2">
+                <button
+                  onClick={handleDownloadLegacy}
+                  disabled={downloadingLegacy || migrarLegacy.isPending}
+                  className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors disabled:opacity-50"
+                  title="Descargar"
+                >
+                  {downloadingLegacy
+                    ? <Loader2 className="w-4 h-4 animate-spin" />
+                    : <Download className="w-4 h-4" />
+                  }
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!confirm("¿Migrar este documento al nuevo sistema? Podrás eliminarlo desde aquí después.")) return;
+                    try {
+                      await migrarLegacy.mutateAsync();
+                      toast({ title: "Documento migrado", description: "Ahora aparece en la lista con acceso completo." });
+                    } catch (err) {
+                      toast({
+                        title: "Error al migrar",
+                        description: err instanceof Error ? err.message : "Intenta de nuevo.",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
+                  disabled={migrarLegacy.isPending || downloadingLegacy}
+                  className="px-2 py-1 text-xs text-amber-700 bg-amber-100 hover:bg-amber-200 rounded transition-colors disabled:opacity-50 font-medium"
+                  title="Migrar al nuevo sistema"
+                >
+                  {migrarLegacy.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : "Migrar"}
+                </button>
+              </div>
             </div>
           )}
           {documentos?.map((doc) => (

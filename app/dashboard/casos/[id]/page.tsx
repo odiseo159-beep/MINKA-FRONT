@@ -22,6 +22,7 @@ import { CasoChatPanel } from "@/components/caso-chat-panel";
 import { DocumentosPanel } from "@/components/documentos-panel";
 import { casesApi } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
+import { useDocumentosCaso } from "@/hooks/use-documentos";
 
 export default function CaseDetailPage() {
   const params = useParams();
@@ -29,6 +30,7 @@ export default function CaseDetailPage() {
   const id = Number(params.id);
   
   const { data: caso, isLoading, error } = useCase(id);
+  const { data: documentosNuevos } = useDocumentosCaso(id);
   const notifyClient = useNotifyClient();
   const { toast } = useToast();
   const token = useAuthStore((state) => state.token);
@@ -215,7 +217,7 @@ export default function CaseDetailPage() {
           {/* Chat con IA */}
           <CasoChatPanel
             casoId={caso.id}
-            tieneDocumento={!!caso.documento_texto}
+            tieneDocumento={!!caso.documento_texto || !!caso.documento_url || (documentosNuevos?.length ?? 0) > 0}
           />
         </div>
 

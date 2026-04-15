@@ -348,4 +348,13 @@ export const caseDocumentosApi = {
       token,
     });
   },
+
+  migrarLegacy: async (casoId: number, token?: string): Promise<{
+    id: number; caso_id: number; nombre: string; tipo_archivo: string; fecha_subida: string;
+  }> => {
+    return fetchAPI(`/api/casos/${casoId}/documentos/migrar-legacy`, {
+      method: "POST",
+      token,
+    });
+  },
 };

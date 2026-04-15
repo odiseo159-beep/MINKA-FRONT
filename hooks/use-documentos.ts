@@ -32,3 +32,16 @@ export function useDeleteDocumento(casoId: number) {
     },
   });
 }
+
+export function useMigrarLegacyDoc(casoId: number) {
+  const token = useAuthStore((s) => s.token);
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => caseDocumentosApi.migrarLegacy(casoId, token || undefined),
+    onSuccess: () => {
+      // Invalidar documentos Y el caso (para que desaparezca el legacyDoc)
+      queryClient.invalidateQueries({ queryKey: ["documentos", casoId] });
+      queryClient.invalidateQueries({ queryKey: ["caso", casoId] });
+    },
+  });
+}
