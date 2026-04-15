@@ -41,6 +41,14 @@ export interface Case {
   fecha_actualizacion: string;
 }
 
+export interface CaseDocument {
+  id: number;
+  caso_id: number;
+  nombre: string;
+  tipo_archivo: string;
+  fecha_subida: string;
+}
+
 export interface CaseFormData {
   telefono: string;
   nombre_cliente: string;

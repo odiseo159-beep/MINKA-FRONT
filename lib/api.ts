@@ -293,3 +293,36 @@ export function calculateStats(cases: Case[]) {
     pendientes_documento: cases.filter(c => c.estado === "pendiente_documento").length,
   };
 }
+
+// ============================================
+// MULTI-DOCUMENTOS POR CASO
+// ============================================
+export const caseDocumentosApi = {
+  list: async (casoId: number, token?: string) => {
+    return fetchAPI<{ id: number; caso_id: number; nombre: string; tipo_archivo: string; fecha_subida: string }[]>(
+      `/api/casos/${casoId}/documentos`,
+      { token }
+    );
+  },
+
+  upload: async (casoId: number, file: File, token?: string) => {
+    const formData = new FormData();
+    formData.append("archivo", file);
+    return fetchUpload<{ id: number; caso_id: number; nombre: string; tipo_archivo: string; fecha_subida: string }>(
+      `/api/casos/${casoId}/documentos`,
+      formData,
+      token
+    );
+  },
+
+  getUrl: async (casoId: number, docId: number, token?: string): Promise<{ url: string; nombre: string; tipo: string }> => {
+    return fetchAPI(`/api/casos/${casoId}/documentos/${docId}`, { token });
+  },
+
+  delete: async (casoId: number, docId: number, token?: string): Promise<void> => {
+    await fetchAPI(`/api/casos/${casoId}/documentos/${docId}`, {
+      method: "DELETE",
+      token,
+    });
+  },
+};
