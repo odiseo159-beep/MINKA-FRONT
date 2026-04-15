@@ -6,6 +6,7 @@ import { useAuthStore } from "@/lib/auth-store";
 import { Sidebar } from "@/components/sidebar";
 import { Header } from "@/components/header";
 import { MobileSidebar } from "@/components/mobile-sidebar";
+import { PrivacyModal } from "@/components/privacy-modal";
 
 export default function DashboardLayout({
   children,
@@ -15,12 +16,23 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [showPrivacy, setShowPrivacy] = useState(false);
 
   const { isAuthenticated, isLoading, checkAuth } = useAuthStore();
 
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
+
+  // Show privacy modal on first access after authentication
+  useEffect(() => {
+    if (isAuthenticated) {
+      const accepted = localStorage.getItem("minka_privacidad_aceptada");
+      if (!accepted) {
+        setShowPrivacy(true);
+      }
+    }
+  }, [isAuthenticated]);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -48,6 +60,14 @@ export default function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
+      <PrivacyModal
+        open={showPrivacy}
+        onAccept={() => {
+          localStorage.setItem("minka_privacidad_aceptada", "true");
+          setShowPrivacy(false);
+        }}
+      />
+
       {/* Desktop sidebar */}
       <Sidebar currentPath={pathname} />
 
