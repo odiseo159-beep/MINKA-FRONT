@@ -3,12 +3,13 @@
 import { useRef, useCallback, useState } from "react";
 import { Upload, FileText, Download, Trash2, Loader2, AlertCircle } from "lucide-react";
 import { useDocumentosCaso, useUploadDocumento, useDeleteDocumento } from "@/hooks/use-documentos";
-import { caseDocumentosApi } from "@/lib/api";
+import { caseDocumentosApi, casesApi } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
 import { useToast } from "@/components/ui/use-toast";
 
 interface DocumentosPanelProps {
   casoId: number;
+  legacyDoc?: { nombre: string } | null;
 }
 
 function formatFecha(iso: string): string {
@@ -29,7 +30,7 @@ function getFileLabel(tipo: string): string {
   return "DOC";
 }
 
-export function DocumentosPanel({ casoId }: DocumentosPanelProps) {
+export function DocumentosPanel({ casoId, legacyDoc }: DocumentosPanelProps) {
   const { data: documentos, isLoading } = useDocumentosCaso(casoId);
   const uploadDoc = useUploadDocumento(casoId);
   const deleteDoc = useDeleteDocumento(casoId);
@@ -38,6 +39,7 @@ export function DocumentosPanel({ casoId }: DocumentosPanelProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
+  const [downloadingLegacy, setDownloadingLegacy] = useState(false);
 
   const handleFile = useCallback(
     async (file: File) => {
@@ -86,6 +88,22 @@ export function DocumentosPanel({ casoId }: DocumentosPanelProps) {
     }
   };
 
+  const handleDownloadLegacy = async () => {
+    setDownloadingLegacy(true);
+    try {
+      const { url, nombre } = await casesApi.getDocumentUrl(casoId, token || undefined);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = nombre;
+      a.target = "_blank";
+      a.click();
+    } catch {
+      toast({ title: "Error", description: "No se pudo obtener el enlace de descarga.", variant: "destructive" });
+    } finally {
+      setDownloadingLegacy(false);
+    }
+  };
+
   const handleDelete = async (docId: number, nombre: string) => {
     if (!confirm(`¿Eliminar "${nombre}"? Esta acción no se puede deshacer.`)) return;
     try {
@@ -102,9 +120,9 @@ export function DocumentosPanel({ casoId }: DocumentosPanelProps) {
         <div className="flex items-center gap-2">
           <FileText className="w-5 h-5 text-minka-500" />
           <h2 className="text-lg font-semibold text-gray-900">Documentos del caso</h2>
-          {documentos && documentos.length > 0 && (
+          {((documentos?.length || 0) + (legacyDoc ? 1 : 0)) > 0 && (
             <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
-              {documentos.length}
+              {(documentos?.length || 0) + (legacyDoc ? 1 : 0)}
             </span>
           )}
         </div>
@@ -157,14 +175,39 @@ export function DocumentosPanel({ casoId }: DocumentosPanelProps) {
             <div key={i} className="h-12 bg-gray-100 rounded-lg animate-pulse" />
           ))}
         </div>
-      ) : !documentos || documentos.length === 0 ? (
+      ) : !legacyDoc && (!documentos || documentos.length === 0) ? (
         <div className="text-center py-4 text-sm text-gray-400">
           <AlertCircle className="w-5 h-5 mx-auto mb-1 text-gray-300" />
           Sin documentos adjuntos
         </div>
       ) : (
         <div className="space-y-2">
-          {documentos.map((doc) => (
+          {/* Documento inicial (sistema anterior) */}
+          {legacyDoc && (
+            <div className="flex items-center justify-between px-3 py-2.5 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors">
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="text-xs font-bold text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded flex-shrink-0">
+                  DOC
+                </span>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-gray-800 truncate">{legacyDoc.nombre}</p>
+                  <p className="text-xs text-gray-400">Documento inicial</p>
+                </div>
+              </div>
+              <button
+                onClick={handleDownloadLegacy}
+                disabled={downloadingLegacy}
+                className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors disabled:opacity-50"
+                title="Descargar"
+              >
+                {downloadingLegacy
+                  ? <Loader2 className="w-4 h-4 animate-spin" />
+                  : <Download className="w-4 h-4" />
+                }
+              </button>
+            </div>
+          )}
+          {documentos?.map((doc) => (
             <div
               key={doc.id}
               className="flex items-center justify-between px-3 py-2.5 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors"

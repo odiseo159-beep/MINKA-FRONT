@@ -179,7 +179,10 @@ export default function CaseDetailPage() {
           </div>
 
           {/* Documentos del caso (multi-doc) */}
-          <DocumentosPanel casoId={caso.id} />
+          <DocumentosPanel
+            casoId={caso.id}
+            legacyDoc={caso.documento_url && caso.documento_nombre ? { nombre: caso.documento_nombre } : null}
+          />
 
           {/* Documents */}
           {caso.documentos_pendientes && (
