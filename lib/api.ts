@@ -106,8 +106,8 @@ export const authApi = {
   },
 
   changePassword: async (
-    token: string, 
-    currentPassword: string, 
+    token: string,
+    currentPassword: string,
     newPassword: string
   ): Promise<void> => {
     await fetchAPI("/auth/cambiar-password", {
@@ -117,6 +117,13 @@ export const authApi = {
         password_actual: currentPassword,
         password_nuevo: newPassword,
       }),
+    });
+  },
+
+  refresh: async (token: string): Promise<{ access_token: string; token_type: string }> => {
+    return fetchAPI<{ access_token: string; token_type: string }>("/auth/refresh", {
+      method: "POST",
+      token,
     });
   },
 };

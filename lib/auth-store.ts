@@ -5,6 +5,18 @@ import { persist } from "zustand/middleware";
 import type { User, LoginCredentials, RegisterCredentials, AuthState } from "@/types";
 import { authApi } from "@/lib/api";
 
+/** Decode JWT payload (client-side, no verification). Returns exp as unix timestamp or null. */
+function getTokenExp(token: string): number | null {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+    return typeof payload.exp === 'number' ? payload.exp : null;
+  } catch {
+    return null;
+  }
+}
+
 interface AuthStore extends AuthState {
   // Actions
   login: (credentials: LoginCredentials) => Promise<void>;
@@ -81,9 +93,22 @@ export const useAuthStore = create<AuthStore>()(
         try {
           const response = await authApi.verify(token);
           if (response.autenticado) {
-            set({ 
-              isAuthenticated: true, 
+            // Calcular si el token expira pronto (menos de 2 horas = 7200 segundos)
+            let activeToken = token;
+            const exp = getTokenExp(token);
+            const now = Math.floor(Date.now() / 1000);
+            if (exp && (exp - now) < 7200) {
+              try {
+                const refreshed = await authApi.refresh(token);
+                activeToken = refreshed.access_token;
+              } catch {
+                // Si falla el refresh, continuar con el token actual (ya es válido)
+              }
+            }
+            set({
+              isAuthenticated: true,
               isLoading: false,
+              token: activeToken,  // actualizar token si fue refrescado
               user: {
                 id: 0, // Will be updated when we fetch full user
                 email: response.email || "",
