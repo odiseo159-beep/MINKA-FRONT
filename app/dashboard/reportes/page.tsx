@@ -136,6 +136,31 @@ export default function ReportesPage() {
     );
   }
 
+  if (cases.length === 0) {
+    return (
+      <div className="animate-fadeIn">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">Reportes</h1>
+          <p className="text-gray-500">Estadísticas y análisis de tus casos</p>
+        </div>
+        <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
+          <BarChart3 className="w-14 h-14 text-gray-200 mx-auto mb-4" />
+          <h2 className="text-lg font-semibold text-gray-900 mb-2">Aún no hay datos para mostrar</h2>
+          <p className="text-gray-500 mb-6 max-w-sm mx-auto">
+            Los gráficos y estadísticas aparecerán aquí una vez que registres tus primeros casos.
+          </p>
+          <Link
+            href="/dashboard/casos?new=true"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-minka-500 text-white rounded-lg hover:bg-minka-600 transition-colors font-medium"
+          >
+            Crear primer caso
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="animate-fadeIn">
       {/* Header */}
@@ -349,7 +374,7 @@ export default function ReportesPage() {
           Clientes más activos
         </h3>
         {topClientsData.length === 0 ? (
-          <p className="text-sm text-gray-400 text-center py-6">Sin datos</p>
+          <p className="text-sm text-gray-400 text-center py-6">Sin datos en el periodo seleccionado</p>
         ) : (
           <div className="space-y-3">
             {topClientsData.map((client, i) => (
@@ -387,11 +412,11 @@ function StatCard({ label, value, highlight }: { label: string; value: number; h
   );
 }
 
-function EmptyChart() {
+function EmptyChart({ message = "Sin datos en el periodo seleccionado" }: { message?: string }) {
   return (
-    <div className="flex flex-col items-center justify-center h-[250px] text-gray-400">
+    <div className="flex flex-col items-center justify-center h-[250px] text-gray-300">
       <BarChart3 className="w-8 h-8 mb-2" />
-      <p className="text-sm">Sin datos para mostrar</p>
+      <p className="text-sm text-gray-400">{message}</p>
     </div>
   );
 }

@@ -42,7 +42,11 @@ export default function DashboardPage() {
 
           <div className="divide-y divide-gray-100">
             {isLoading ? (
-              <div className="p-6 text-center text-gray-500">Cargando...</div>
+              <div className="p-4 space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-12 bg-gray-100 rounded-lg animate-pulse" />
+                ))}
+              </div>
             ) : urgentCases.length === 0 ? (
               <div className="p-6 text-center">
                 <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-2" />
@@ -103,7 +107,11 @@ export default function DashboardPage() {
 
           <div className="divide-y divide-gray-100">
             {isLoading ? (
-              <div className="p-6 text-center text-gray-500">Cargando...</div>
+              <div className="p-4 space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-12 bg-gray-100 rounded-lg animate-pulse" />
+                ))}
+              </div>
             ) : recentCases.length === 0 ? (
               <div className="p-6 text-center">
                 <p className="text-gray-500 mb-4">No hay casos registrados</p>
