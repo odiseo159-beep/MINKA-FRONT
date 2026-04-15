@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Bot, Send, User, AlertCircle, FileText } from "lucide-react";
+import { Bot, Send, User, AlertCircle, FileText, Trash2 } from "lucide-react";
 import { casoChatApi } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
 
@@ -26,6 +26,8 @@ export function CasoChatPanel({ casoId, tieneDocumento }: CasoChatPanelProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+  const [isClearing, setIsClearing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -38,6 +40,31 @@ export function CasoChatPanel({ casoId, tieneDocumento }: CasoChatPanelProps) {
   useEffect(() => {
     scrollToBottom();
   }, [messages, scrollToBottom]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setIsLoadingHistory(true);
+    casoChatApi.historial(casoId, token || undefined)
+      .then(({ mensajes }) => {
+        if (!cancelled) setMessages(mensajes.map(m => ({ role: m.role as "user" | "assistant", content: m.content })));
+      })
+      .catch(() => {/* historial vacío, no es error crítico */})
+      .finally(() => { if (!cancelled) setIsLoadingHistory(false); });
+    return () => { cancelled = true; };
+  }, [casoId, token]);
+
+  const limpiarChat = useCallback(async () => {
+    if (!confirm("¿Limpiar toda la conversación? No se puede deshacer.")) return;
+    setIsClearing(true);
+    try {
+      await casoChatApi.limpiarHistorial(casoId, token || undefined);
+      setMessages([]);
+    } catch {
+      // silencioso
+    } finally {
+      setIsClearing(false);
+    }
+  }, [casoId, token]);
 
   const enviarMensaje = useCallback(async (texto: string) => {
     const pregunta = texto.trim();
@@ -87,11 +114,25 @@ export function CasoChatPanel({ casoId, tieneDocumento }: CasoChatPanelProps) {
             <span>Doc. cargado</span>
           </div>
         )}
+        {messages.length > 0 && (
+          <button
+            onClick={limpiarChat}
+            disabled={isClearing}
+            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+            title="Limpiar conversación"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4" style={{ maxHeight: "380px" }}>
-        {messages.length === 0 && (
+        {isLoadingHistory ? (
+          <div className="space-y-3 pt-2">
+            {[1, 2, 3].map(i => <div key={i} className="h-10 bg-gray-100 rounded-2xl animate-pulse" />)}
+          </div>
+        ) : messages.length === 0 && (
           <div className="space-y-4">
             <p className="text-sm text-gray-500 text-center pt-2">
               Pregunta sobre el caso, los próximos pasos o la normativa aplicable.

@@ -280,6 +280,22 @@ export const casoChatApi = {
       body: JSON.stringify({ pregunta }),
     });
   },
+
+  historial: async (casoId: number, token?: string): Promise<{ mensajes: { role: string; content: string; timestamp: string }[] }> => {
+    const res = await fetch(`${API_URL}/api/casos/${casoId}/chat/historial`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) throw new Error("Error al cargar historial");
+    return res.json();
+  },
+
+  limpiarHistorial: async (casoId: number, token?: string): Promise<void> => {
+    const res = await fetch(`${API_URL}/api/casos/${casoId}/chat/historial`, {
+      method: "DELETE",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) throw new Error("Error al limpiar historial");
+  },
 };
 
 // ============================================
