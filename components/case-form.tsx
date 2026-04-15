@@ -152,9 +152,13 @@ export function CaseForm({ initialData, onSubmit, onCancel, isLoading }: CaseFor
   };
 
   const handleFormSubmit = useCallback(async (formData: CaseFormData) => {
+    // Normalizar teléfono: quitar espacios, guiones, +51, 51 inicial
+    let tel = formData.telefono.replace(/[\s\-\(\)]/g, "").replace(/^\+/, "");
+    if (tel.startsWith("51") && tel.length === 11) tel = tel.slice(2);
     await onSubmit(
       {
         ...formData,
+        telefono: tel,
         ...(parseResult?.rawText ? { documento_texto: parseResult.rawText } : {}),
       },
       fileObject || undefined,

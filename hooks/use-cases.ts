@@ -19,7 +19,8 @@ export function useCases() {
   return useQuery({
     queryKey: caseKeys.all,
     queryFn: () => casesApi.getAll(token || undefined),
-    staleTime: 30 * 1000, // 30 seconds
+    staleTime: 10 * 1000, // 10 seconds
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -31,6 +32,8 @@ export function useCase(id: number) {
     queryKey: caseKeys.detail(id),
     queryFn: () => casesApi.getById(id, token || undefined),
     enabled: !!id,
+    staleTime: 10 * 1000,
+    refetchOnWindowFocus: true,
   });
 }
 

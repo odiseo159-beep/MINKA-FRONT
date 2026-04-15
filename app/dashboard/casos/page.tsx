@@ -252,8 +252,19 @@ function CasosContent() {
                         {STATUS_LABELS[caso.estado]}
                       </span>
                     </td>
-                    <td className={`px-6 py-4 text-sm ${getDateUrgencyClass(caso.proxima_fecha)}`}>
-                      {formatDate(caso.proxima_fecha)}
+                    <td className="px-6 py-4 text-sm">
+                      {(() => {
+                        const estaVencido = caso.proxima_fecha && new Date(caso.proxima_fecha) < new Date();
+                        return estaVencido ? (
+                          <span className="inline-block px-2 py-0.5 text-xs font-bold rounded-full bg-red-100 text-red-700">
+                            VENCIDO
+                          </span>
+                        ) : (
+                          <span className={getDateUrgencyClass(caso.proxima_fecha)}>
+                            {formatDate(caso.proxima_fecha)}
+                          </span>
+                        );
+                      })()}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500">
                       {formatRelativeTime(caso.fecha_actualizacion)}

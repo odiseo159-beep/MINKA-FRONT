@@ -67,10 +67,19 @@ export default function DashboardPage() {
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className={`text-sm font-medium ${getDateUrgencyClass(caso.proxima_fecha)}`}>
-                      {formatDate(caso.proxima_fecha)}
-                    </p>
-                    <span className={`inline-block px-2 py-0.5 text-xs rounded-full ${STATUS_COLORS[caso.estado]}`}>
+                    {(() => {
+                      const estaVencido = caso.proxima_fecha && new Date(caso.proxima_fecha) < new Date();
+                      return estaVencido ? (
+                        <span className="inline-block px-2 py-0.5 text-xs font-bold rounded-full bg-red-100 text-red-700">
+                          VENCIDO
+                        </span>
+                      ) : (
+                        <p className={`text-sm font-medium ${getDateUrgencyClass(caso.proxima_fecha)}`}>
+                          {formatDate(caso.proxima_fecha)}
+                        </p>
+                      );
+                    })()}
+                    <span className={`inline-block px-2 py-0.5 text-xs rounded-full mt-0.5 ${STATUS_COLORS[caso.estado]}`}>
                       {STATUS_LABELS[caso.estado]}
                     </span>
                   </div>

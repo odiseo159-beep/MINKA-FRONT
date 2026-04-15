@@ -29,6 +29,7 @@ export function CasoChatPanel({ casoId, tieneDocumento }: CasoChatPanelProps) {
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [isClearing, setIsClearing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [historialError, setHistorialError] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const token = useAuthStore((state) => state.token);
@@ -48,7 +49,9 @@ export function CasoChatPanel({ casoId, tieneDocumento }: CasoChatPanelProps) {
       .then(({ mensajes }) => {
         if (!cancelled) setMessages(mensajes.map(m => ({ role: m.role as "user" | "assistant", content: m.content })));
       })
-      .catch(() => {/* historial vacío, no es error crítico */})
+      .catch(() => {
+        if (!cancelled) setHistorialError(true);
+      })
       .finally(() => { if (!cancelled) setIsLoadingHistory(false); });
     return () => { cancelled = true; };
   }, [casoId, token]);
@@ -132,7 +135,17 @@ export function CasoChatPanel({ casoId, tieneDocumento }: CasoChatPanelProps) {
           <div className="space-y-3 pt-2">
             {[1, 2, 3].map(i => <div key={i} className="h-10 bg-gray-100 rounded-2xl animate-pulse" />)}
           </div>
-        ) : messages.length === 0 && (
+        ) : (
+          <>
+            {historialError && messages.length === 0 && (
+              <div className="flex items-center gap-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mx-0 mt-2">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                <span>No se pudo cargar el historial. Las respuestas anteriores pueden no estar disponibles.</span>
+              </div>
+            )}
+          </>
+        )}
+        {!isLoadingHistory && messages.length === 0 && (
           <div className="space-y-4">
             <p className="text-sm text-gray-500 text-center pt-2">
               Pregunta sobre el caso, los próximos pasos o la normativa aplicable.
