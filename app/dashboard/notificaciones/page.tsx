@@ -106,8 +106,8 @@ export default function NotificacionesPage() {
                 onClick={() => setFiltroEstado(option.value)}
                 className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                   filtroEstado === option.value
-                    ? "bg-minka-50 text-minka-600 border border-minka-200"
-                    : "text-gray-600 border border-gray-200 hover:bg-gray-50"
+                    ? "bg-gray-200 text-gray-900 border border-gray-300 font-semibold"
+                    : "text-gray-500 border border-gray-200 hover:bg-gray-100"
                 }`}
               >
                 {option.label}

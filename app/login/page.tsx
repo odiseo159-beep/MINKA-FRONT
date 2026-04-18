@@ -38,7 +38,7 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           {/* Logo */}
           <div className="flex items-center gap-3 mb-8">
-            <div className="w-12 h-12 bg-minka-500 rounded-xl flex items-center justify-center">
+            <div className="w-12 h-12 bg-minka-500 rounded-xl flex items-center justify-center" aria-hidden="true">
               <Scale className="w-6 h-6 text-white" />
             </div>
             <div>
@@ -59,8 +59,8 @@ export default function LoginPage() {
 
           {/* Error message */}
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3 text-red-700">
-              <AlertCircle className="w-5 h-5 flex-shrink-0" />
+            <div role="alert" className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3 text-red-700">
+              <AlertCircle className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
               <span className="text-sm">{error}</span>
             </div>
           )}
@@ -105,12 +105,13 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
                   {showPassword ? (
-                    <EyeOff className="w-5 h-5" />
+                    <EyeOff className="w-5 h-5" aria-hidden="true" />
                   ) : (
-                    <Eye className="w-5 h-5" />
+                    <Eye className="w-5 h-5" aria-hidden="true" />
                   )}
                 </button>
               </div>
@@ -149,7 +150,7 @@ export default function LoginPage() {
       {/* Right side - Branding */}
       <div className="hidden lg:flex flex-1 bg-gradient-to-br from-minka-500 to-minka-700 items-center justify-center p-12">
         <div className="max-w-md text-center text-white">
-          <div className="w-20 h-20 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-8">
+          <div className="w-20 h-20 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-8" aria-hidden="true">
             <Scale className="w-10 h-10" />
           </div>
           <h2 className="text-3xl font-bold mb-4">

@@ -17,8 +17,12 @@ export function CaseCard({ caso, onEdit, onNotify }: CaseCardProps) {
 
   return (
     <div
+      role="button"
+      tabIndex={0}
       onClick={() => router.push(`/dashboard/casos/${caso.id}`)}
-      className="bg-white rounded-xl border border-gray-200 p-4 space-y-3 cursor-pointer hover:border-gray-300 hover:shadow-sm transition-all"
+      onKeyDown={(e) => { if (e.key === "Enter") router.push(`/dashboard/casos/${caso.id}`); }}
+      aria-label={`Ver caso de ${caso.nombre_cliente}`}
+      className="bg-white rounded-xl border border-gray-200 p-4 space-y-3 cursor-pointer hover:border-gray-300 hover:shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-minka-500 focus:ring-offset-2"
     >
       {/* Header: name + status */}
       <div className="flex items-start justify-between gap-3">
@@ -47,20 +51,20 @@ export function CaseCard({ caso, onEdit, onNotify }: CaseCardProps) {
       </div>
 
       {/* Actions */}
-      <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
+      <div className="flex items-center justify-end gap-1 pt-2 border-t border-gray-100">
         <button
           onClick={(e) => { e.stopPropagation(); onEdit(caso); }}
-          className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-          title="Editar"
+          aria-label={`Editar caso de ${caso.nombre_cliente}`}
+          className="min-h-[44px] min-w-[44px] flex items-center justify-center text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
         >
-          <Edit2 className="w-4 h-4" />
+          <Edit2 className="w-4 h-4" aria-hidden="true" />
         </button>
         <button
           onClick={(e) => { e.stopPropagation(); onNotify(caso); }}
-          className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-          title="Notificar por WhatsApp"
+          aria-label={`Notificar a ${caso.nombre_cliente} por WhatsApp`}
+          className="min-h-[44px] min-w-[44px] flex items-center justify-center text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
         >
-          <MessageSquare className="w-4 h-4" />
+          <MessageSquare className="w-4 h-4" aria-hidden="true" />
         </button>
       </div>
     </div>

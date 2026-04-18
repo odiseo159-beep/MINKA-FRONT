@@ -112,7 +112,7 @@ export function CalendarView({ cases, selectedDate, onSelectDate }: CalendarView
           <div className="w-px h-6 bg-gray-200" />
           <button
             onClick={goToday}
-            className="px-3 py-1.5 text-sm text-minka-600 hover:bg-minka-50 rounded-lg transition-colors font-medium"
+            className="px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors font-medium"
           >
             Hoy
           </button>
@@ -183,7 +183,7 @@ function MonthDayCell({ day, isSelected, onClick }: { day: CalendarDay; isSelect
         "min-h-[80px] lg:min-h-[100px] p-1.5 border-b border-r border-gray-100 text-left transition-colors relative",
         !day.isCurrentMonth && "bg-gray-50/50",
         day.isCurrentMonth && "hover:bg-gray-50",
-        isSelected && "bg-minka-50 ring-2 ring-inset ring-minka-500"
+        isSelected && "bg-gray-100 ring-2 ring-inset ring-gray-900"
       )}
     >
       <span
@@ -204,7 +204,7 @@ function MonthDayCell({ day, isSelected, onClick }: { day: CalendarDay; isSelect
               key={caso.id}
               className={cn(
                 "text-[10px] leading-tight px-1.5 py-0.5 rounded truncate",
-                STATUS_COLORS[caso.estado] || "bg-gray-100 text-gray-600"
+                STATUS_COLORS[caso.estado] || "badge-archivado"
               )}
               title={`${caso.nombre_cliente} — ${caso.proxima_accion || caso.tipo_caso}`}
             >
@@ -239,7 +239,7 @@ function WeekView({
           onClick={() => onSelectDate(day.dateStr)}
           className={cn(
             "min-h-[300px] p-2 text-left transition-colors hover:bg-gray-50 flex flex-col",
-            selectedDate === day.dateStr && "bg-minka-50 ring-2 ring-inset ring-minka-500"
+            selectedDate === day.dateStr && "bg-gray-100 ring-2 ring-inset ring-gray-900"
           )}
         >
           {/* Day header */}
@@ -264,7 +264,7 @@ function WeekView({
                 key={caso.id}
                 className={cn(
                   "text-[11px] leading-tight px-1.5 py-1 rounded truncate",
-                  STATUS_COLORS[caso.estado] || "bg-gray-100 text-gray-600"
+                  STATUS_COLORS[caso.estado] || "badge-archivado"
                 )}
                 title={`${caso.nombre_cliente} — ${caso.proxima_accion || caso.tipo_caso}`}
               >
@@ -304,7 +304,7 @@ function DayView({ day }: { day: CalendarDay }) {
                   <span
                     className={cn(
                       "inline-block px-2 py-0.5 text-[10px] font-medium rounded-full",
-                      STATUS_COLORS[caso.estado] || "bg-gray-100 text-gray-600"
+                      STATUS_COLORS[caso.estado] || "badge-archivado"
                     )}
                   >
                     {STATUS_LABELS[caso.estado] || caso.estado}

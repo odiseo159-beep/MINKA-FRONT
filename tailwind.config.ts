@@ -57,16 +57,16 @@ const config: Config = {
           800: "#6D201A",
           900: "#4F1714",
         },
-        // Status colors
+        // Status badge foreground colors — for chart/icon use (backgrounds via CSS vars in globals.css)
         status: {
-          nuevo: "#3B82F6",
-          tramite: "#F59E0B",
-          audiencia: "#8B5CF6",
-          pendiente: "#EAB308",
-          revision: "#06B6D4",
-          apelacion: "#EC4899",
-          resuelto: "#22C55E",
-          archivado: "#6B7280",
+          nuevo:     "var(--badge-nuevo-fg)",
+          tramite:   "var(--badge-tramite-fg)",
+          audiencia: "var(--badge-audiencia-fg)",
+          pendiente: "var(--badge-pendiente-fg)",
+          revision:  "var(--badge-revision-fg)",
+          apelacion: "var(--badge-apelacion-fg)",
+          resuelto:  "var(--badge-resuelto-fg)",
+          archivado: "var(--badge-archivado-fg)",
         },
       },
       borderRadius: {
@@ -75,7 +75,7 @@ const config: Config = {
         sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
+        sans: ["var(--font-sans)", "system-ui", "sans-serif"],
       },
     },
   },

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useCases, useCreateCase, useUpdateCase, useNotifyClient, filterCases } from "@/hooks/use-cases";
 import { casesApi } from "@/lib/api";
@@ -42,7 +42,7 @@ export default function CasosPage() {
 function CasosContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { data: cases, isLoading, error } = useCases();
+  const { data: cases, isLoading, error, refetch } = useCases();
   const createCase = useCreateCase();
   const updateCase = useUpdateCase();
   const notifyClient = useNotifyClient();
@@ -54,6 +54,8 @@ function CasosContent() {
   const { sortField, sortDirection, toggleSort } = useSortState();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCase, setEditingCase] = useState<Case | null>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const lastFocusedRef = useRef<HTMLElement | null>(null);
 
   // Open modal if ?new=true in URL
   useEffect(() => {
@@ -61,6 +63,19 @@ function CasosContent() {
       setIsModalOpen(true);
     }
   }, [searchParams]);
+
+  // Focus management for modal
+  useEffect(() => {
+    if (isModalOpen) {
+      lastFocusedRef.current = document.activeElement as HTMLElement;
+      const firstFocusable = modalRef.current?.querySelector<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      firstFocusable?.focus();
+    } else {
+      lastFocusedRef.current?.focus();
+    }
+  }, [isModalOpen]);
 
   // Filter → sort → paginate
   const filteredCases = cases ? filterCases(cases, { ...filters, search: debouncedSearch }) : [];
@@ -131,6 +146,24 @@ function CasosContent() {
     setIsModalOpen(true);
   };
 
+  const closeModal = () => { setIsModalOpen(false); setEditingCase(null); };
+
+  const handleModalKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Escape") { closeModal(); return; }
+    if (e.key !== "Tab") return;
+    const focusable = modalRef.current?.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    if (!focusable?.length) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (e.shiftKey) {
+      if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+    } else {
+      if (document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+  };
+
   return (
     <div className="space-y-6 animate-fadeIn">
       {/* Stats */}
@@ -151,7 +184,7 @@ function CasosContent() {
         ) : error ? (
           <EmptyError
             message={error instanceof Error ? error.message : undefined}
-            onRetry={() => window.location.reload()}
+            onRetry={() => refetch()}
           />
         ) : cases?.length === 0 ? (
           <EmptyNoCases onAction={() => { setEditingCase(null); setIsModalOpen(true); }} />
@@ -190,6 +223,7 @@ function CasosContent() {
                     <th
                       key={field}
                       onClick={() => toggleSort(field)}
+                      aria-sort={isActive ? (sortDirection === "asc" ? "ascending" : "descending") : "none"}
                       className={cn(
                         "px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer select-none hover:bg-gray-100 transition-colors",
                         isActive ? "text-minka-600" : "text-gray-500"
@@ -215,7 +249,7 @@ function CasosContent() {
                   <td colSpan={6}>
                     <EmptyError
                       message={error instanceof Error ? error.message : undefined}
-                      onRetry={() => window.location.reload()}
+                      onRetry={() => refetch()}
                     />
                   </td>
                 </tr>
@@ -235,8 +269,10 @@ function CasosContent() {
                 pagination.paginatedItems.map((caso) => (
                   <tr
                     key={caso.id}
+                    tabIndex={0}
                     onClick={() => router.push(`/dashboard/casos/${caso.id}`)}
-                    className="hover:bg-gray-50 transition-colors cursor-pointer"
+                    onKeyDown={(e) => { if (e.key === "Enter") router.push(`/dashboard/casos/${caso.id}`); }}
+                    className="hover:bg-gray-50 transition-colors cursor-pointer focus:outline-none focus:bg-gray-100"
                   >
                     <td className="px-6 py-4">
                       <div>
@@ -270,20 +306,20 @@ function CasosContent() {
                       {formatRelativeTime(caso.fecha_actualizacion)}
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center justify-end gap-2">
+                      <div className="flex items-center justify-end gap-1">
                         <button
                           onClick={(e) => { e.stopPropagation(); handleEdit(caso); }}
-                          className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                          title="Editar"
+                          aria-label={`Editar caso de ${caso.nombre_cliente}`}
+                          className="min-h-[44px] min-w-[44px] flex items-center justify-center text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                         >
-                          <Edit2 className="w-4 h-4" />
+                          <Edit2 className="w-4 h-4" aria-hidden="true" />
                         </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); handleNotify(caso); }}
-                          className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                          title="Notificar por WhatsApp"
+                          aria-label={`Notificar a ${caso.nombre_cliente} por WhatsApp`}
+                          className="min-h-[44px] min-w-[44px] flex items-center justify-center text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
                         >
-                          <MessageSquare className="w-4 h-4" />
+                          <MessageSquare className="w-4 h-4" aria-hidden="true" />
                         </button>
                       </div>
                     </td>
@@ -313,30 +349,39 @@ function CasosContent() {
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           {/* Overlay */}
-          <div 
+          <div
             className="absolute inset-0 bg-black/50"
-            onClick={() => { setIsModalOpen(false); setEditingCase(null); }}
+            aria-hidden="true"
+            onClick={closeModal}
           />
-          
+
           {/* Modal content */}
-          <div className="relative bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto animate-fadeIn">
+          <div
+            ref={modalRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="caso-modal-title"
+            onKeyDown={handleModalKeyDown}
+            className="relative bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto animate-fadeIn"
+          >
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">
+              <h3 id="caso-modal-title" className="text-lg font-semibold text-gray-900">
                 {editingCase ? "Editar caso" : "Nuevo caso"}
               </h3>
               <button
-                onClick={() => { setIsModalOpen(false); setEditingCase(null); }}
+                onClick={closeModal}
+                aria-label="Cerrar"
                 className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
               >
-                <X className="w-5 h-5" />
+                <X className="w-5 h-5" aria-hidden="true" />
               </button>
             </div>
-            
+
             <div className="p-6">
               <CaseForm
                 initialData={editingCase || undefined}
                 onSubmit={handleSubmit}
-                onCancel={() => { setIsModalOpen(false); setEditingCase(null); }}
+                onCancel={closeModal}
                 isLoading={createCase.isPending || updateCase.isPending}
               />
             </div>

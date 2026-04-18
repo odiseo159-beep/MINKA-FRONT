@@ -218,14 +218,14 @@ export const STATUS_LABELS: Record<string, string> = {
 };
 
 export const STATUS_COLORS: Record<string, string> = {
-  nuevo: "bg-blue-100 text-blue-800",
-  en_tramite: "bg-amber-100 text-amber-800",
-  en_audiencia: "bg-purple-100 text-purple-800",
-  pendiente_documento: "bg-yellow-100 text-yellow-800",
-  en_revision: "bg-cyan-100 text-cyan-800",
-  en_apelacion: "bg-pink-100 text-pink-800",
-  resuelto: "bg-green-100 text-green-800",
-  archivado: "bg-gray-100 text-gray-800",
+  nuevo:               "badge-nuevo",
+  en_tramite:          "badge-tramite",
+  en_audiencia:        "badge-audiencia",
+  pendiente_documento: "badge-pendiente",
+  en_revision:         "badge-revision",
+  en_apelacion:        "badge-apelacion",
+  resuelto:            "badge-resuelto",
+  archivado:           "badge-archivado",
 };
 
 export const CASE_TYPE_LABELS: Record<string, string> = {

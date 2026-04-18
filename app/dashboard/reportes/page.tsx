@@ -175,7 +175,7 @@ export default function ReportesPage() {
           <button
             onClick={exportPDF}
             disabled={exporting}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-minka-600 border border-minka-200 rounded-lg hover:bg-minka-50 transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50"
           >
             {exporting ? (
               <>
@@ -346,7 +346,7 @@ export default function ReportesPage() {
                       <div className="flex items-center gap-2 mt-1">
                         <span
                           className={`inline-block px-2 py-0.5 text-[10px] font-medium rounded-full ${
-                            STATUS_COLORS[caso.estado] || "bg-gray-100 text-gray-600"
+                            STATUS_COLORS[caso.estado] || "badge-archivado"
                           }`}
                         >
                           {STATUS_LABELS[caso.estado] || caso.estado}

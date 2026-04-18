@@ -57,7 +57,7 @@ export function EventList({ cases, dateStr }: EventListProps) {
                   <div className="flex items-center gap-2 mt-1.5">
                     <span
                       className={`inline-block px-2 py-0.5 text-[11px] font-medium rounded-full ${
-                        STATUS_COLORS[caso.estado] || "bg-gray-100 text-gray-600"
+                        STATUS_COLORS[caso.estado] || "badge-archivado"
                       }`}
                     >
                       {STATUS_LABELS[caso.estado] || caso.estado}

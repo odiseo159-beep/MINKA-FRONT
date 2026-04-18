@@ -4,26 +4,55 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* shadcn/ui base tokens — clean white/near-black, Harvey-inspired */
+    --background: 0 0% 100%;           /* pure white for cards & modals */
+    --foreground: 0 0% 9%;             /* near-black, neutral */
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 0 0% 9%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 0 68% 46%;
+    --popover-foreground: 0 0% 9%;
+    --primary: 0 68% 46%;              /* minka red — CTAs only */
     --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 9%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;      /* neutral mid-gray */
+    --accent: 0 0% 96%;
+    --accent-foreground: 0 0% 9%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 0 68% 46%;
+    --border: 0 0% 91%;                /* neutral light gray border */
+    --input: 0 0% 91%;
+    --ring: 0 68% 46%;                 /* minka red for focus rings */
     --radius: 0.5rem;
+
+    /* App surface — barely-there neutral, white cards read clean against it */
+    --surface-app: oklch(97.5% 0 0);
+
+    /* Status badge tokens (OKLCH — perceptually uniform) */
+    --badge-nuevo-bg:     oklch(93% 0.07 250);
+    --badge-nuevo-fg:     oklch(27% 0.15 250);
+
+    --badge-tramite-bg:   oklch(94% 0.08 78);
+    --badge-tramite-fg:   oklch(32% 0.12 55);
+
+    --badge-audiencia-bg: oklch(93% 0.07 305);
+    --badge-audiencia-fg: oklch(27% 0.14 305);
+
+    --badge-pendiente-bg: oklch(95% 0.10 95);
+    --badge-pendiente-fg: oklch(33% 0.11 75);
+
+    --badge-revision-bg:  oklch(93% 0.07 185);
+    --badge-revision-fg:  oklch(27% 0.12 185);
+
+    --badge-apelacion-bg: oklch(93% 0.07 10);
+    --badge-apelacion-fg: oklch(30% 0.15 15);
+
+    --badge-resuelto-bg:  oklch(93% 0.08 145);
+    --badge-resuelto-fg:  oklch(27% 0.14 145);
+
+    --badge-archivado-bg: oklch(93% 0.01 22);
+    --badge-archivado-fg: oklch(42% 0.02 22);
   }
 
   * {
@@ -32,7 +61,27 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-feature-settings: "rlig" 1, "calt" 1, "kern" 1;
+    font-kerning: normal;
+    text-rendering: optimizeLegibility;
+    line-height: 1.6;
+  }
+
+  /* Tabular numbers for all data: case numbers, dates, stats */
+  table, .tabular-data {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Tighter leading on headings */
+  h1, h2, h3, h4, h5, h6 {
+    line-height: 1.25;
+    font-kerning: normal;
+    letter-spacing: -0.01em;
+  }
+
+  /* Ensure inputs inherit the font */
+  input, select, textarea, button {
+    font-family: inherit;
   }
 }
 
@@ -44,11 +93,26 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
+  /* App surface background */
+  .bg-surface { background-color: var(--surface-app); }
 }
 
-/* Custom animations */
+/* Status badge color classes — used via STATUS_COLORS token map */
+@layer components {
+  .badge-nuevo     { background-color: var(--badge-nuevo-bg);     color: var(--badge-nuevo-fg); }
+  .badge-tramite   { background-color: var(--badge-tramite-bg);   color: var(--badge-tramite-fg); }
+  .badge-audiencia { background-color: var(--badge-audiencia-bg); color: var(--badge-audiencia-fg); }
+  .badge-pendiente { background-color: var(--badge-pendiente-bg); color: var(--badge-pendiente-fg); }
+  .badge-revision  { background-color: var(--badge-revision-bg);  color: var(--badge-revision-fg); }
+  .badge-apelacion { background-color: var(--badge-apelacion-bg); color: var(--badge-apelacion-fg); }
+  .badge-resuelto  { background-color: var(--badge-resuelto-bg);  color: var(--badge-resuelto-fg); }
+  .badge-archivado { background-color: var(--badge-archivado-bg); color: var(--badge-archivado-fg); }
+}
+
+/* Custom animations — expo deceleration, no bounce */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
@@ -58,9 +122,17 @@
 }
 
 .animate-fadeIn {
-  animation: fadeIn 0.3s ease-out;
+  animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .animate-slideIn {
-  animation: slideIn 0.3s ease-out;
+  animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fadeIn,
+  .animate-slideIn {
+    animation: none;
+  }
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { FolderOpen, TrendingUp, CheckCircle, AlertCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { DashboardStats } from "@/types";
 
 interface StatsCardsProps {
@@ -8,62 +8,39 @@ interface StatsCardsProps {
   isLoading?: boolean;
 }
 
-const cards = [
-  {
-    key: "total" as const,
-    label: "Total de casos",
-    icon: FolderOpen,
-    color: "text-gray-600",
-    bgColor: "bg-gray-100",
-  },
-  {
-    key: "activos" as const,
-    label: "Casos activos",
-    icon: TrendingUp,
-    color: "text-blue-600",
-    bgColor: "bg-blue-100",
-  },
-  {
-    key: "resueltos" as const,
-    label: "Resueltos",
-    icon: CheckCircle,
-    color: "text-green-600",
-    bgColor: "bg-green-100",
-  },
-  {
-    key: "pendientes_documento" as const,
-    label: "Pendientes doc.",
-    icon: AlertCircle,
-    color: "text-amber-600",
-    bgColor: "bg-amber-100",
-  },
+const metrics = [
+  { key: "total" as const, label: "Total de casos", valueClass: "text-gray-800" },
+  { key: "activos" as const, label: "Casos activos", valueClass: "text-blue-600" },
+  { key: "resueltos" as const, label: "Resueltos", valueClass: "text-emerald-600" },
+  { key: "pendientes_documento" as const, label: "Pendientes doc.", valueClass: "text-amber-600" },
+];
+
+const dividerClass = [
+  "",
+  "border-l border-gray-100",
+  "border-t border-gray-100 lg:border-t-0 lg:border-l",
+  "border-t border-l border-gray-100 lg:border-t-0",
 ];
 
 export function StatsCards({ stats, isLoading }: StatsCardsProps) {
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      {cards.map((card) => (
-        <div
-          key={card.key}
-          className="bg-white rounded-xl border border-gray-200 p-5"
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500 mb-1">{card.label}</p>
-              {isLoading ? (
-                <div className="h-8 w-16 bg-gray-200 rounded animate-pulse" />
-              ) : (
-                <p className={`text-2xl font-bold ${card.color}`}>
-                  {stats[card.key]}
-                </p>
-              )}
-            </div>
-            <div className={`w-12 h-12 ${card.bgColor} rounded-xl flex items-center justify-center`}>
-              <card.icon className={`w-6 h-6 ${card.color}`} />
-            </div>
+    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="grid grid-cols-2 lg:grid-cols-4">
+        {metrics.map((metric, i) => (
+          <div key={metric.key} className={cn("p-6", dividerClass[i])}>
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+              {metric.label}
+            </p>
+            {isLoading ? (
+              <div className="h-9 w-16 bg-gray-100 rounded animate-pulse" />
+            ) : (
+              <p className={cn("text-3xl font-bold tabular-nums tracking-tight", metric.valueClass)}>
+                {stats[metric.key]}
+              </p>
+            )}
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }

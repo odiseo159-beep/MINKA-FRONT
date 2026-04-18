@@ -58,16 +58,21 @@ export function MobileSidebar({ isOpen, onClose, currentPath }: MobileSidebarPro
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 lg:hidden">
+    <div id="mobile-sidebar" className="fixed inset-0 z-50 lg:hidden">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/50" aria-hidden="true" onClick={onClose} />
 
       {/* Drawer */}
-      <aside className="absolute inset-y-0 left-0 w-72 bg-white shadow-xl flex flex-col animate-slideIn">
+      <aside
+        role="dialog"
+        aria-modal="true"
+        aria-label="Menú de navegación"
+        className="absolute inset-y-0 left-0 w-72 bg-white shadow-xl flex flex-col animate-slideIn"
+      >
         {/* Header */}
         <div className="p-6 border-b border-gray-100 flex items-center justify-between">
           <Link href="/dashboard" onClick={onClose} className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-minka-500 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-minka-500 rounded-xl flex items-center justify-center" aria-hidden="true">
               <Scale className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -75,8 +80,12 @@ export function MobileSidebar({ isOpen, onClose, currentPath }: MobileSidebarPro
               <p className="text-xs text-gray-500">Asistente Legal AI</p>
             </div>
           </Link>
-          <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg">
-            <X className="w-5 h-5" />
+          <button
+            onClick={onClose}
+            aria-label="Cerrar menú"
+            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
+          >
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
@@ -88,14 +97,15 @@ export function MobileSidebar({ isOpen, onClose, currentPath }: MobileSidebarPro
                 <Link
                   href={item.href}
                   onClick={onClose}
+                  aria-current={isActive(item.href) ? "page" : undefined}
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors",
                     isActive(item.href)
-                      ? "bg-minka-50 text-minka-600"
-                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                      ? "bg-minka-50 text-minka-700 font-semibold"
+                      : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"
                   )}
                 >
-                  <item.icon className="w-5 h-5" />
+                  <item.icon className="w-5 h-5" aria-hidden="true" />
                   {item.label}
                 </Link>
               </li>
@@ -105,8 +115,8 @@ export function MobileSidebar({ isOpen, onClose, currentPath }: MobileSidebarPro
 
         {/* Bot status */}
         <div className="p-4 border-t border-gray-100">
-          <div className="flex items-center gap-3 px-4 py-3 bg-green-50 rounded-lg">
-            <div className="relative">
+          <div className="flex items-center gap-3 px-4 py-3 bg-green-50 rounded-lg" role="status" aria-label="Bot de WhatsApp activo">
+            <div className="relative" aria-hidden="true">
               <MessageCircle className="w-5 h-5 text-green-600" />
               <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-green-50 animate-pulse" />
             </div>

@@ -16,6 +16,7 @@ import {
   Clock,
   User,
   Scale,
+  Lock,
 } from "lucide-react";
 import { NormativaPanel } from "@/components/normativa-panel";
 import { CasoChatPanel } from "@/components/caso-chat-panel";
@@ -98,9 +99,10 @@ export default function CaseDetailPage() {
         <div className="flex items-center gap-4">
           <Link
             href="/dashboard/casos"
+            aria-label="Volver a casos"
             className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-5 h-5" aria-hidden="true" />
           </Link>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">{caso.nombre_cliente}</h1>
@@ -121,7 +123,7 @@ export default function CaseDetailPage() {
               </>
             ) : (
               <>
-                <MessageSquare className="w-4 h-4" />
+                <MessageSquare className="w-4 h-4" aria-hidden="true" />
                 Notificar por WhatsApp
               </>
             )}
@@ -130,7 +132,7 @@ export default function CaseDetailPage() {
             href={`/dashboard/casos?edit=${caso.id}`}
             className="flex items-center gap-2 px-4 py-2 bg-minka-500 text-white rounded-lg hover:bg-minka-600 transition-colors"
           >
-            <Edit2 className="w-4 h-4" />
+            <Edit2 className="w-4 h-4" aria-hidden="true" />
             Editar
           </Link>
         </div>
@@ -190,7 +192,7 @@ export default function CaseDetailPage() {
           {caso.documentos_pendientes && (
             <div className="bg-white rounded-xl border border-gray-200 p-6">
               <div className="flex items-center gap-2 mb-4">
-                <FileText className="w-5 h-5 text-amber-500" />
+                <FileText className="w-5 h-5 text-amber-500" aria-hidden="true" />
                 <h2 className="text-lg font-semibold text-gray-900">Documentos pendientes</h2>
               </div>
               <p className="text-gray-600 whitespace-pre-wrap">{caso.documentos_pendientes}</p>
@@ -201,7 +203,7 @@ export default function CaseDetailPage() {
           {caso.notas && (
             <div className="bg-amber-50 rounded-xl border border-amber-200 p-6">
               <div className="flex items-center gap-2 mb-4">
-                <span className="text-lg">🔒</span>
+                <Lock className="w-5 h-5 text-amber-600" aria-hidden="true" />
                 <h2 className="text-lg font-semibold text-amber-900">Notas internas</h2>
               </div>
               <p className="text-amber-800 whitespace-pre-wrap">{caso.notas}</p>
@@ -226,7 +228,7 @@ export default function CaseDetailPage() {
           {/* Client info */}
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <div className="flex items-center gap-2 mb-4">
-              <User className="w-5 h-5 text-gray-400" />
+              <User className="w-5 h-5 text-gray-400" aria-hidden="true" />
               <h2 className="text-lg font-semibold text-gray-900">Cliente</h2>
             </div>
 
@@ -244,7 +246,7 @@ export default function CaseDetailPage() {
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 font-medium text-green-600 hover:text-green-700"
                 >
-                  <Phone className="w-4 h-4" />
+                  <Phone className="w-4 h-4" aria-hidden="true" />
                   +51 {caso.telefono}
                 </a>
               </div>
@@ -254,7 +256,7 @@ export default function CaseDetailPage() {
           {/* Timeline */}
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <div className="flex items-center gap-2 mb-4">
-              <Clock className="w-5 h-5 text-gray-400" />
+              <Clock className="w-5 h-5 text-gray-400" aria-hidden="true" />
               <h2 className="text-lg font-semibold text-gray-900">Historial</h2>
             </div>
 

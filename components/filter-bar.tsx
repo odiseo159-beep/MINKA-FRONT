@@ -29,7 +29,7 @@ export function FilterBar({ filters, onChange, onClearAll, onNewCase }: FilterBa
       <div className="flex flex-col sm:flex-row gap-3">
         {/* Search */}
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" aria-hidden="true" />
           <input
             type="text"
             placeholder="Buscar por nombre o expediente..."
@@ -41,7 +41,7 @@ export function FilterBar({ filters, onChange, onClearAll, onNewCase }: FilterBa
 
         {/* Status filter */}
         <div className="relative">
-          <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" aria-hidden="true" />
           <select
             value={filters.status}
             onChange={(e) => update({ status: e.target.value })}
@@ -81,7 +81,7 @@ export function FilterBar({ filters, onChange, onClearAll, onNewCase }: FilterBa
       {/* Date range row */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
         <div className="flex items-center gap-2 text-sm text-gray-500">
-          <Calendar className="w-4 h-4" />
+          <Calendar className="w-4 h-4" aria-hidden="true" />
           <span>Próxima fecha:</span>
         </div>
         <div className="flex items-center gap-2">
@@ -89,16 +89,16 @@ export function FilterBar({ filters, onChange, onClearAll, onNewCase }: FilterBa
             type="date"
             value={filters.dateFrom}
             onChange={(e) => update({ dateFrom: e.target.value })}
+            aria-label="Fecha desde"
             className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-minka-500 focus:border-minka-500 outline-none"
-            placeholder="Desde"
           />
-          <span className="text-gray-400 text-sm">—</span>
+          <span className="text-gray-400 text-sm" aria-hidden="true">—</span>
           <input
             type="date"
             value={filters.dateTo}
             onChange={(e) => update({ dateTo: e.target.value })}
+            aria-label="Fecha hasta"
             className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-minka-500 focus:border-minka-500 outline-none"
-            placeholder="Hasta"
           />
         </div>
       </div>
@@ -133,7 +133,7 @@ export function FilterBar({ filters, onChange, onClearAll, onNewCase }: FilterBa
           {activeFilterCount >= 2 && (
             <button
               onClick={onClearAll}
-              className="text-sm text-minka-600 hover:text-minka-700 font-medium ml-1"
+              className="text-sm text-gray-500 hover:text-gray-900 font-medium ml-1"
             >
               Limpiar todos
             </button>
@@ -146,13 +146,14 @@ export function FilterBar({ filters, onChange, onClearAll, onNewCase }: FilterBa
 
 function FilterChip({ label, onRemove }: { label: string; onRemove: () => void }) {
   return (
-    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm bg-minka-50 text-minka-700 border border-minka-200">
+    <span className="inline-flex items-center gap-1 rounded-full text-sm bg-gray-100 text-gray-700 border border-gray-200 pl-3 pr-1 py-1">
       {label}
       <button
         onClick={onRemove}
-        className="hover:bg-minka-100 rounded-full p-0.5 transition-colors"
+        aria-label={`Quitar filtro: ${label}`}
+        className="min-h-[32px] min-w-[32px] flex items-center justify-center hover:bg-gray-200 rounded-full transition-colors ml-0.5"
       >
-        <X className="w-3 h-3" />
+        <X className="w-3 h-3" aria-hidden="true" />
       </button>
     </span>
   );

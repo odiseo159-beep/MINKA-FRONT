@@ -177,10 +177,14 @@ export function CaseForm({ initialData, onSubmit, onCancel, isLoading }: CaseFor
 
           {uploadState === "idle" && (
             <div
+              role="button"
+              tabIndex={0}
+              aria-label="Subir documento del caso. Haz clic o arrastra un archivo .docx o .pdf"
               onDrop={handleDrop}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onClick={() => fileInputRef.current?.click()}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fileInputRef.current?.click(); } }}
               className={`
                 border-2 border-dashed rounded-lg p-6 text-center cursor-pointer
                 transition-colors duration-200
@@ -277,30 +281,32 @@ export function CaseForm({ initialData, onSubmit, onCancel, isLoading }: CaseFor
       {/* Row 1: Nombre + Teléfono */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+          <label htmlFor="nombre_cliente" className="block text-sm font-medium text-gray-700 mb-1.5">
             Nombre del cliente *
           </label>
           <input
+            id="nombre_cliente"
             {...register("nombre_cliente")}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-minka-500 focus:border-minka-500 outline-none"
             placeholder="María García"
           />
           {errors.nombre_cliente && (
-            <p className="mt-1 text-sm text-red-600">{errors.nombre_cliente.message}</p>
+            <p className="mt-1 text-sm text-red-600" role="alert">{errors.nombre_cliente.message}</p>
           )}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+          <label htmlFor="telefono" className="block text-sm font-medium text-gray-700 mb-1.5">
             Teléfono (WhatsApp) *
           </label>
           <input
+            id="telefono"
             {...register("telefono")}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-minka-500 focus:border-minka-500 outline-none"
             placeholder="987654321"
           />
           {errors.telefono && (
-            <p className="mt-1 text-sm text-red-600">{errors.telefono.message}</p>
+            <p className="mt-1 text-sm text-red-600" role="alert">{errors.telefono.message}</p>
           )}
         </div>
       </div>
@@ -308,10 +314,11 @@ export function CaseForm({ initialData, onSubmit, onCancel, isLoading }: CaseFor
       {/* Row 2: Expediente + Tipo */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+          <label htmlFor="expediente" className="block text-sm font-medium text-gray-700 mb-1.5">
             N° Expediente
           </label>
           <input
+            id="expediente"
             {...register("expediente")}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-minka-500 focus:border-minka-500 outline-none"
             placeholder="00123-2026-0-1801-JR-PE-01"
@@ -319,10 +326,11 @@ export function CaseForm({ initialData, onSubmit, onCancel, isLoading }: CaseFor
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+          <label htmlFor="tipo_caso" className="block text-sm font-medium text-gray-700 mb-1.5">
             Tipo de caso *
           </label>
           <select
+            id="tipo_caso"
             {...register("tipo_caso")}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-minka-500 focus:border-minka-500 outline-none bg-white"
           >
@@ -332,7 +340,7 @@ export function CaseForm({ initialData, onSubmit, onCancel, isLoading }: CaseFor
             ))}
           </select>
           {errors.tipo_caso && (
-            <p className="mt-1 text-sm text-red-600">{errors.tipo_caso.message}</p>
+            <p className="mt-1 text-sm text-red-600" role="alert">{errors.tipo_caso.message}</p>
           )}
         </div>
       </div>
@@ -340,10 +348,11 @@ export function CaseForm({ initialData, onSubmit, onCancel, isLoading }: CaseFor
       {/* Row 3: Estado + Próxima fecha */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+          <label htmlFor="estado" className="block text-sm font-medium text-gray-700 mb-1.5">
             Estado
           </label>
           <select
+            id="estado"
             {...register("estado")}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-minka-500 focus:border-minka-500 outline-none bg-white"
           >
@@ -354,10 +363,11 @@ export function CaseForm({ initialData, onSubmit, onCancel, isLoading }: CaseFor
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+          <label htmlFor="proxima_fecha" className="block text-sm font-medium text-gray-700 mb-1.5">
             Próxima fecha
           </label>
           <input
+            id="proxima_fecha"
             {...register("proxima_fecha")}
             type="date"
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-minka-500 focus:border-minka-500 outline-none"
@@ -367,10 +377,11 @@ export function CaseForm({ initialData, onSubmit, onCancel, isLoading }: CaseFor
 
       {/* Próxima acción */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+        <label htmlFor="proxima_accion" className="block text-sm font-medium text-gray-700 mb-1.5">
           Próxima acción
         </label>
         <input
+          id="proxima_accion"
           {...register("proxima_accion")}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-minka-500 focus:border-minka-500 outline-none"
           placeholder="Ej: Audiencia de juzgamiento"
@@ -379,10 +390,11 @@ export function CaseForm({ initialData, onSubmit, onCancel, isLoading }: CaseFor
 
       {/* Documentos pendientes */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+        <label htmlFor="documentos_pendientes" className="block text-sm font-medium text-gray-700 mb-1.5">
           Documentos pendientes
         </label>
         <textarea
+          id="documentos_pendientes"
           {...register("documentos_pendientes")}
           rows={2}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-minka-500 focus:border-minka-500 outline-none resize-none"
@@ -392,11 +404,12 @@ export function CaseForm({ initialData, onSubmit, onCancel, isLoading }: CaseFor
 
       {/* Notas internas */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+        <label htmlFor="notas" className="block text-sm font-medium text-gray-700 mb-1.5">
           Notas internas
           <span className="font-normal text-gray-400 ml-1">(no se comparten con el cliente)</span>
         </label>
         <textarea
+          id="notas"
           {...register("notas")}
           rows={3}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-minka-500 focus:border-minka-500 outline-none resize-none"

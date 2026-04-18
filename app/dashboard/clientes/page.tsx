@@ -104,7 +104,7 @@ function ClientCard({ client }: { client: ClientSummary }) {
       <div className="p-5">
         <div className="flex items-start gap-4">
           {/* Avatar */}
-          <div className="w-11 h-11 rounded-full bg-minka-100 text-minka-600 flex items-center justify-center text-sm font-bold flex-shrink-0">
+          <div className="w-11 h-11 rounded-full bg-gray-200 text-gray-700 flex items-center justify-center text-sm font-bold flex-shrink-0">
             {initials}
           </div>
 
@@ -146,7 +146,7 @@ function ClientCard({ client }: { client: ClientSummary }) {
                 <div className="flex items-center gap-2 min-w-0">
                   <span
                     className={`inline-block px-2 py-0.5 text-[10px] font-medium rounded-full ${
-                      STATUS_COLORS[client.ultimoCaso.estado] || "bg-gray-100 text-gray-600"
+                      STATUS_COLORS[client.ultimoCaso.estado] || "badge-archivado"
                     }`}
                   >
                     {STATUS_LABELS[client.ultimoCaso.estado] || client.ultimoCaso.estado}

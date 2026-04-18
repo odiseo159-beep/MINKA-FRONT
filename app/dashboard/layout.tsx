@@ -44,9 +44,9 @@ export default function DashboardLayout({
   // Show loading while checking auth
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-10 h-10 border-4 border-minka-200 border-t-minka-500 rounded-full animate-spin mx-auto mb-4" />
+      <div className="min-h-screen bg-surface flex items-center justify-center">
+        <div role="status" className="text-center">
+          <div className="w-10 h-10 border-4 border-minka-200 border-t-minka-500 rounded-full animate-spin mx-auto mb-4" aria-hidden="true" />
           <p className="text-sm text-gray-500">Verificando sesión...</p>
         </div>
       </div>
@@ -59,7 +59,7 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-surface flex">
       <PrivacyModal
         open={showPrivacy}
         onAccept={() => {

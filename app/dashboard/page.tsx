@@ -5,7 +5,7 @@ import { useCases, useDashboardStats } from "@/hooks/use-cases";
 import { StatsCards } from "@/components/stats-cards";
 import { formatDate, formatRelativeTime, getDateUrgencyClass } from "@/lib/utils";
 import { STATUS_LABELS, STATUS_COLORS, CASE_TYPE_LABELS } from "@/types";
-import { ArrowRight, Plus, Clock, AlertTriangle, CheckCircle } from "lucide-react";
+import { ArrowRight, Plus, Clock, AlertTriangle, CheckCircle, Calendar, BarChart3 } from "lucide-react";
 
 export default function DashboardPage() {
   const { data: cases, isLoading } = useCases();
@@ -34,7 +34,7 @@ export default function DashboardPage() {
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-amber-500" />
+              <AlertTriangle className="w-5 h-5 text-amber-500" aria-hidden="true" />
               <h3 className="font-semibold text-gray-900">Casos urgentes</h3>
             </div>
             <span className="text-sm text-gray-500">{urgentCases.length} casos</span>
@@ -49,7 +49,7 @@ export default function DashboardPage() {
               </div>
             ) : urgentCases.length === 0 ? (
               <div className="p-6 text-center">
-                <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-2" />
+                <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-2" aria-hidden="true" />
                 <p className="text-gray-600">No hay casos urgentes</p>
                 <p className="text-sm text-gray-400">¡Todo bajo control!</p>
               </div>
@@ -91,10 +91,10 @@ export default function DashboardPage() {
           {urgentCases.length > 4 && (
             <Link
               href="/dashboard/casos?filter=urgente"
-              className="block px-6 py-3 text-center text-sm text-minka-500 hover:bg-minka-50 border-t border-gray-100"
+              className="block px-6 py-3 text-center text-sm text-gray-500 hover:bg-gray-50 border-t border-gray-100 hover:text-gray-900 transition-colors"
             >
               Ver todos los casos urgentes
-              <ArrowRight className="inline w-4 h-4 ml-1" />
+              <ArrowRight className="inline w-4 h-4 ml-1" aria-hidden="true" />
             </Link>
           )}
         </div>
@@ -103,7 +103,7 @@ export default function DashboardPage() {
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Clock className="w-5 h-5 text-gray-400" />
+              <Clock className="w-5 h-5 text-gray-400" aria-hidden="true" />
               <h3 className="font-semibold text-gray-900">Actividad reciente</h3>
             </div>
             <Link
@@ -161,27 +161,29 @@ export default function DashboardPage() {
       </div>
 
       {/* Quick actions */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
+      <div>
         <h3 className="font-semibold text-gray-900 mb-4">Acciones rápidas</h3>
         <div className="flex flex-wrap gap-3">
           <Link
             href="/dashboard/casos?new=true"
             className="inline-flex items-center gap-2 px-4 py-2 bg-minka-500 text-white rounded-lg hover:bg-minka-600 transition-colors"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4" aria-hidden="true" />
             Nuevo caso
           </Link>
           <Link
             href="/dashboard/calendario"
             className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
           >
-            📅 Ver calendario
+            <Calendar className="w-4 h-4" aria-hidden="true" />
+            Ver calendario
           </Link>
           <Link
             href="/dashboard/reportes"
             className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
           >
-            📊 Generar reporte
+            <BarChart3 className="w-4 h-4" aria-hidden="true" />
+            Generar reporte
           </Link>
         </div>
       </div>

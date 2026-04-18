@@ -100,8 +100,8 @@ export function CasoChatPanel({ casoId, tieneDocumento }: CasoChatPanelProps) {
     <div className="bg-white rounded-xl border border-gray-200 flex flex-col" style={{ minHeight: "420px" }}>
       {/* Header */}
       <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100">
-        <div className="w-8 h-8 bg-minka-50 rounded-lg flex items-center justify-center flex-shrink-0">
-          <Bot className="w-4 h-4 text-minka-600" />
+        <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+          <Bot className="w-4 h-4 text-gray-600" />
         </div>
         <div className="flex-1 min-w-0">
           <h2 className="text-base font-semibold text-gray-900">Consultar caso con IA</h2>
@@ -156,7 +156,7 @@ export function CasoChatPanel({ casoId, tieneDocumento }: CasoChatPanelProps) {
                   key={s}
                   type="button"
                   onClick={() => enviarMensaje(s)}
-                  className="text-left text-xs text-gray-600 bg-gray-50 hover:bg-minka-50 hover:text-minka-700 border border-gray-200 hover:border-minka-200 rounded-lg px-3 py-2 transition-colors"
+                  className="text-left text-xs text-gray-600 bg-gray-50 hover:bg-gray-100 hover:text-gray-900 border border-gray-200 rounded-lg px-3 py-2 transition-colors"
                 >
                   {s}
                 </button>
@@ -171,8 +171,8 @@ export function CasoChatPanel({ casoId, tieneDocumento }: CasoChatPanelProps) {
             className={`flex gap-2.5 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
           >
             {msg.role === "assistant" && (
-              <div className="w-7 h-7 bg-minka-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                <Bot className="w-3.5 h-3.5 text-minka-600" />
+              <div className="w-7 h-7 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Bot className="w-3.5 h-3.5 text-gray-600" />
               </div>
             )}
 

@@ -177,19 +177,19 @@ export default function CalculadoraPage() {
 
           {/* Resultado */}
           {resultado && (
-            <div className="bg-minka-50 border border-minka-200 rounded-xl p-6 space-y-4">
-              <h2 className="text-base font-semibold text-minka-700 flex items-center gap-2">
+            <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 space-y-4">
+              <h2 className="text-base font-semibold text-gray-700 flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
                 Resultado
               </h2>
 
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-white rounded-lg p-4 border border-minka-100">
+                <div className="bg-white rounded-lg p-4 border border-gray-100">
                   <p className="text-xs text-gray-500 mb-1">Fecha de inicio</p>
                   <p className="text-lg font-bold text-gray-900">{formatDate(resultado.fecha_inicio)}</p>
                   <p className="text-xs text-gray-400 capitalize">{getDayOfWeek(resultado.fecha_inicio)}</p>
                 </div>
-                <div className="bg-white rounded-lg p-4 border border-minka-200 ring-2 ring-minka-300">
+                <div className="bg-white rounded-lg p-4 border border-gray-900/20 ring-2 ring-gray-900/20">
                   <p className="text-xs text-gray-500 mb-1">Fecha de vencimiento</p>
                   <p className="text-lg font-bold text-minka-600">{formatDate(resultado.fecha_vencimiento)}</p>
                   <p className="text-xs text-gray-400 capitalize">{getDayOfWeek(resultado.fecha_vencimiento)}</p>
@@ -244,7 +244,7 @@ export default function CalculadoraPage() {
                 <button
                   key={p.label}
                   onClick={() => applyPreset(p)}
-                  className="w-full text-left text-sm px-3 py-2 rounded-lg hover:bg-minka-50 hover:text-minka-700 text-gray-600 transition-colors"
+                  className="w-full text-left text-sm px-3 py-2 rounded-lg hover:bg-gray-100 hover:text-gray-900 text-gray-600 transition-colors"
                 >
                   {p.label}
                 </button>
