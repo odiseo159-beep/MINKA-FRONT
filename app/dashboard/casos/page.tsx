@@ -166,6 +166,12 @@ function CasosContent() {
 
   return (
     <div className="space-y-6 animate-fadeIn">
+      {/* Page header */}
+      <div>
+        <p className="eyebrow">Cartera de casos</p>
+        <h1 className="text-2xl font-bold text-gray-900">Casos activos</h1>
+      </div>
+
       {/* Stats */}
       <StatsCards stats={stats} isLoading={isLoading} />
 
@@ -277,7 +283,7 @@ function CasosContent() {
                     <td className="px-6 py-4">
                       <div>
                         <p className="font-medium text-gray-900">{caso.nombre_cliente}</p>
-                        <p className="text-sm text-gray-500">{caso.expediente || "Sin expediente"}</p>
+                        <p className="text-xs text-gray-400 font-mono">{caso.expediente || "—"}</p>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">

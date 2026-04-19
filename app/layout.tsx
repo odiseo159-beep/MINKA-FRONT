@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Libre_Franklin } from "next/font/google";
+import { Libre_Franklin, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 
@@ -8,6 +8,14 @@ const franklin = Libre_Franklin({
   variable: "--font-sans",
   display: "swap",
   weight: ["400", "500", "600", "700", "800"],
+});
+
+const instrumentSerif = Instrument_Serif({
+  subsets: ["latin"],
+  variable: "--font-serif",
+  display: "swap",
+  weight: "400",
+  style: ["normal", "italic"],
 });
 
 export const metadata: Metadata = {
@@ -24,7 +32,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" className={franklin.variable}>
+    <html lang="es" className={`${franklin.variable} ${instrumentSerif.variable}`}>
       <body>
         <Providers>{children}</Providers>
       </body>

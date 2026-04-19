@@ -86,6 +86,17 @@
 }
 
 @layer utilities {
+  /* Eyebrow label — monospace, uppercase, spaced. From prototype. */
+  .eyebrow {
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: hsl(var(--muted-foreground));
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;

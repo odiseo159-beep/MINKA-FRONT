@@ -29,6 +29,7 @@ export default function CalendarioPage() {
       <div className="animate-fadeIn">
         <div className="flex items-center justify-between mb-6">
           <div>
+            <p className="eyebrow">Agenda</p>
             <h1 className="text-2xl font-bold text-gray-900">Calendario</h1>
             <p className="text-gray-500">Gestiona tus audiencias, plazos y eventos</p>
           </div>
@@ -48,6 +49,7 @@ export default function CalendarioPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
+          <p className="eyebrow">Agenda</p>
           <h1 className="text-2xl font-bold text-gray-900">Calendario</h1>
           <p className="text-gray-500">
             {casesWithDate.length === 0

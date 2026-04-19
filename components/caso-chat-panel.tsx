@@ -13,6 +13,8 @@ interface Message {
 interface CasoChatPanelProps {
   casoId: number;
   tieneDocumento: boolean;
+  seedQuery?: string;
+  onSeedConsumed?: () => void;
 }
 
 const SUGERENCIAS = [
@@ -22,7 +24,7 @@ const SUGERENCIAS = [
   "¿Qué artículos del código aplican aquí?",
 ];
 
-export function CasoChatPanel({ casoId, tieneDocumento }: CasoChatPanelProps) {
+export function CasoChatPanel({ casoId, tieneDocumento, seedQuery, onSeedConsumed }: CasoChatPanelProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -30,12 +32,14 @@ export function CasoChatPanel({ casoId, tieneDocumento }: CasoChatPanelProps) {
   const [isClearing, setIsClearing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [historialError, setHistorialError] = useState(false);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const token = useAuthStore((state) => state.token);
 
   const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    const container = messagesContainerRef.current;
+    if (container) container.scrollTop = container.scrollHeight;
   }, []);
 
   useEffect(() => {
@@ -55,6 +59,14 @@ export function CasoChatPanel({ casoId, tieneDocumento }: CasoChatPanelProps) {
       .finally(() => { if (!cancelled) setIsLoadingHistory(false); });
     return () => { cancelled = true; };
   }, [casoId, token]);
+
+  useEffect(() => {
+    if (seedQuery && !isLoadingHistory) {
+      enviarMensaje(seedQuery);
+      onSeedConsumed?.();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seedQuery]);
 
   const limpiarChat = useCallback(async () => {
     if (!confirm("¿Limpiar toda la conversación? No se puede deshacer.")) return;
@@ -130,7 +142,7 @@ export function CasoChatPanel({ casoId, tieneDocumento }: CasoChatPanelProps) {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4" style={{ maxHeight: "380px" }}>
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-5 py-4 space-y-4" style={{ maxHeight: "380px" }}>
         {isLoadingHistory ? (
           <div className="space-y-3 pt-2">
             {[1, 2, 3].map(i => <div key={i} className="h-10 bg-gray-100 rounded-2xl animate-pulse" />)}

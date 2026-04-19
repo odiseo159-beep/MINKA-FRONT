@@ -28,6 +28,7 @@ export default function ClientesPage() {
     return (
       <div className="animate-fadeIn">
         <div className="mb-6">
+          <p className="eyebrow">Directorio</p>
           <h1 className="text-2xl font-bold text-gray-900">Clientes</h1>
           <p className="text-gray-500">Cargando...</p>
         </div>
@@ -53,6 +54,7 @@ export default function ClientesPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
+          <p className="eyebrow">Directorio</p>
           <h1 className="text-2xl font-bold text-gray-900">Clientes</h1>
           <p className="text-gray-500">
             {clients.length} cliente{clients.length !== 1 ? "s" : ""} registrado{clients.length !== 1 ? "s" : ""}

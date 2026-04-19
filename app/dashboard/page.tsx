@@ -25,6 +25,12 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6 animate-fadeIn">
+      {/* Page header */}
+      <div>
+        <p className="eyebrow">Panel de control</p>
+        <h1 className="text-2xl font-bold text-gray-900">Resumen general</h1>
+      </div>
+
       {/* Stats cards */}
       <StatsCards stats={stats} isLoading={isLoading} />
 

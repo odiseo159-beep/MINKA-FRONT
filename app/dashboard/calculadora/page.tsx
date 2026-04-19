@@ -90,10 +90,8 @@ export default function CalculadoraPage() {
     <div className="p-6 max-w-4xl mx-auto space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-          <Calculator className="w-6 h-6 text-minka-500" />
-          Calculadora de Plazos
-        </h1>
+        <p className="eyebrow">Herramientas</p>
+        <h1 className="text-2xl font-bold text-gray-900">Calculadora de plazos</h1>
         <p className="text-gray-500 mt-1 text-sm">
           Calcula fechas de vencimiento descontando fines de semana y feriados peruanos.
         </p>

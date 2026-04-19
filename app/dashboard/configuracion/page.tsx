@@ -121,6 +121,7 @@ export default function ConfiguracionPage() {
     <div className="animate-fadeIn max-w-3xl">
       {/* Header */}
       <div className="mb-6">
+        <p className="eyebrow">Cuenta</p>
         <h1 className="text-2xl font-bold text-gray-900">Configuración</h1>
         <p className="text-gray-500">Gestiona tu perfil y preferencias</p>
       </div>

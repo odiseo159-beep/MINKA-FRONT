@@ -51,19 +51,15 @@ export default function NotificacionesPage() {
     <div className="space-y-6 animate-fadeIn">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Bell className="w-6 h-6 text-gray-400" />
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Historial de Notificaciones
-            </h1>
-            <p className="text-sm text-gray-500">
-              {notifications.length}{" "}
-              {notifications.length === 1
-                ? "notificacion registrada"
-                : "notificaciones registradas"}
-            </p>
-          </div>
+        <div>
+          <p className="eyebrow">Comunicaciones</p>
+          <h1 className="text-2xl font-bold text-gray-900">Notificaciones</h1>
+          <p className="text-sm text-gray-500 mt-1">
+            {notifications.length}{" "}
+            {notifications.length === 1
+              ? "notificación registrada"
+              : "notificaciones registradas"}
+          </p>
         </div>
 
         {notifications.length > 0 && (

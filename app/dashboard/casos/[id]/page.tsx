@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useCase, useUpdateCase, useNotifyClient } from "@/hooks/use-cases";
@@ -17,6 +18,7 @@ import {
   User,
   Scale,
   Lock,
+  Sparkles,
 } from "lucide-react";
 import { NormativaPanel } from "@/components/normativa-panel";
 import { CasoChatPanel } from "@/components/caso-chat-panel";
@@ -29,12 +31,20 @@ export default function CaseDetailPage() {
   const params = useParams();
   const router = useRouter();
   const id = Number(params.id);
-  
+
   const { data: caso, isLoading, error } = useCase(id);
   const { data: documentosNuevos } = useDocumentosCaso(id);
   const notifyClient = useNotifyClient();
   const { toast } = useToast();
   const token = useAuthStore((state) => state.token);
+
+  const [aiSeedQuery, setAiSeedQuery] = useState<string | undefined>(undefined);
+  const chatSectionRef = useRef<HTMLDivElement>(null);
+
+  const triggerAiAction = (query: string) => {
+    setAiSeedQuery(query);
+    setTimeout(() => chatSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
+  };
 
   const handleNotify = async () => {
     if (!caso) return;
@@ -105,8 +115,8 @@ export default function CaseDetailPage() {
             <ArrowLeft className="w-5 h-5" aria-hidden="true" />
           </Link>
           <div>
+            <p className="eyebrow">{caso.expediente ? `Expediente · ${caso.expediente}` : "Detalle del caso"}</p>
             <h1 className="text-2xl font-bold text-gray-900">{caso.nombre_cliente}</h1>
-            <p className="text-gray-500">{caso.expediente || "Sin expediente"}</p>
           </div>
         </div>
 
@@ -136,6 +146,21 @@ export default function CaseDetailPage() {
             Editar
           </Link>
         </div>
+      </div>
+
+      {/* AI Synthesis panel */}
+      <div className="bg-gray-50 rounded-xl border border-gray-200 p-5 mb-6">
+        <div className="flex items-center gap-2 mb-2">
+          <Sparkles className="w-4 h-4 text-minka-500" aria-hidden="true" />
+          <p className="eyebrow" style={{ color: "hsl(var(--ring))" }}>Síntesis del caso · Minka</p>
+        </div>
+        <p className="text-sm text-gray-700 leading-relaxed">
+          {CASE_TYPE_LABELS[caso.tipo_caso] || caso.tipo_caso} a favor de <strong>{caso.nombre_cliente}</strong>.{" "}
+          Estado actual: <strong>{STATUS_LABELS[caso.estado]}</strong>.{" "}
+          {caso.proxima_accion && <>Próxima acción: {caso.proxima_accion}{caso.proxima_fecha ? ` (${formatDate(caso.proxima_fecha)})` : ""}. </>}
+          {caso.notas && <>{caso.notas.slice(0, 140)}{caso.notas.length > 140 ? "…" : ""}</>}
+          {!caso.proxima_accion && !caso.notas && "Sin notas adicionales registradas."}
+        </p>
       </div>
 
       {/* Content */}
@@ -217,10 +242,14 @@ export default function CaseDetailPage() {
           <NormativaPanel tipoCaso={caso.tipo_caso} notas={caso.notas} />
 
           {/* Chat con IA */}
-          <CasoChatPanel
-            casoId={caso.id}
-            tieneDocumento={!!caso.documento_texto || !!caso.documento_url || (documentosNuevos?.length ?? 0) > 0}
-          />
+          <div ref={chatSectionRef}>
+            <CasoChatPanel
+              casoId={caso.id}
+              tieneDocumento={!!caso.documento_texto || !!caso.documento_url || (documentosNuevos?.length ?? 0) > 0}
+              seedQuery={aiSeedQuery}
+              onSeedConsumed={() => setAiSeedQuery(undefined)}
+            />
+          </div>
         </div>
 
         {/* Sidebar */}
@@ -275,6 +304,30 @@ export default function CaseDetailPage() {
                   <p className="text-xs text-gray-500">{formatRelativeTime(caso.fecha_actualizacion)}</p>
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* AI Quick Actions */}
+          <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Sparkles className="w-4 h-4 text-minka-500" aria-hidden="true" />
+              <h2 className="text-base font-semibold text-gray-900">Acciones IA</h2>
+            </div>
+            <div className="space-y-2">
+              {[
+                { label: "Próximos pasos", query: "¿Cuáles son los próximos pasos recomendados en este caso?" },
+                { label: "Preparar alegatos", query: "Ayúdame a preparar los argumentos principales para el siguiente paso procesal de este caso." },
+                { label: "Buscar precedentes", query: "¿Qué jurisprudencia peruana es relevante para este tipo de caso?" },
+                { label: "Analizar riesgos", query: "¿Cuáles son los principales riesgos procesales en este caso y cómo mitigarlos?" },
+              ].map(({ label, query }) => (
+                <button
+                  key={label}
+                  onClick={() => triggerAiAction(query)}
+                  className="w-full text-left text-sm text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg px-3 py-2.5 transition-colors"
+                >
+                  {label}
+                </button>
+              ))}
             </div>
           </div>
         </div>

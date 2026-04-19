@@ -121,6 +121,7 @@ export default function ReportesPage() {
     return (
       <div className="animate-fadeIn">
         <div className="mb-6">
+          <p className="eyebrow">Análisis</p>
           <h1 className="text-2xl font-bold text-gray-900">Reportes</h1>
           <p className="text-gray-500">Cargando datos...</p>
         </div>
@@ -140,6 +141,7 @@ export default function ReportesPage() {
     return (
       <div className="animate-fadeIn">
         <div className="mb-6">
+          <p className="eyebrow">Análisis</p>
           <h1 className="text-2xl font-bold text-gray-900">Reportes</h1>
           <p className="text-gray-500">Estadísticas y análisis de tus casos</p>
         </div>
@@ -166,6 +168,7 @@ export default function ReportesPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
+          <p className="eyebrow">Análisis</p>
           <h1 className="text-2xl font-bold text-gray-900">Reportes</h1>
           <p className="text-gray-500">
             {filtered.length} caso{filtered.length !== 1 ? "s" : ""} en el periodo seleccionado
