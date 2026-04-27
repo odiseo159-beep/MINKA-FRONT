@@ -191,7 +191,14 @@ export function LegalAgentPanel({ casoId, tieneDocumentos }: LegalAgentPanelProp
               </button>
             </div>
           </div>
-          <div className="prose prose-sm max-w-none p-4 text-gray-800 [&_table]:w-full [&_table]:text-xs [&_th]:bg-gray-50 [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-semibold [&_th]:border [&_th]:border-gray-200 [&_td]:px-3 [&_td]:py-1.5 [&_td]:border [&_td]:border-gray-200 [&_td]:align-top [&_hr]:border-gray-200 [&_h2]:mt-5 [&_h2]:mb-2 [&_h2]:text-sm [&_h2]:font-semibold [&_h2]:text-gray-900 [&_h2]:border-b [&_h2]:border-gray-100 [&_h2]:pb-1 [&_h3]:mt-3 [&_h3]:mb-1 [&_h3]:text-sm [&_h3]:font-medium [&_h3]:text-gray-700">
+          <div className="prose prose-sm max-w-none p-4 text-gray-800
+            [&_h2]:text-base [&_h2]:font-bold [&_h2]:text-gray-900 [&_h2]:mt-6 [&_h2]:mb-2 [&_h2]:pb-1 [&_h2]:border-b [&_h2]:border-gray-200
+            [&_h3]:text-[13.5px] [&_h3]:font-semibold [&_h3]:text-gray-700 [&_h3]:mt-3 [&_h3]:mb-1
+            [&_p]:text-[13px] [&_p]:leading-relaxed [&_li]:text-[13px]
+            [&_table]:w-full [&_table]:text-xs [&_table]:border-collapse
+            [&_th]:bg-gray-50 [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-semibold [&_th]:border [&_th]:border-gray-200
+            [&_td]:px-3 [&_td]:py-1.5 [&_td]:border [&_td]:border-gray-200 [&_td]:align-top
+            [&_hr]:border-gray-200">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{resultado.resultado}</ReactMarkdown>
           </div>
         </div>
