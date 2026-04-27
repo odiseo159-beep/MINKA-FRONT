@@ -38,10 +38,11 @@ export async function parseDocxFile(file: File): Promise<ParsedDocument> {
   }
 
   // --- Nombre del cliente (denunciante/demandante) ---
+  // Usar [ \t] en vez de \s para no capturar saltos de línea
   const clientPatterns = [
-    /DENUNCIANTE:\s*([A-ZÁÉÍÓÚÑ\s,]+)/i,
-    /DEMANDANTE:\s*([A-ZÁÉÍÓÚÑ\s,]+)/i,
-    /AGRAVIADO:\s*([A-ZÁÉÍÓÚÑ\s,]+)/i,
+    /DENUNCIANTE:\s*([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑA-záéíóúñ \t,]+)/i,
+    /DEMANDANTE:\s*([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑA-záéíóúñ \t,]+)/i,
+    /AGRAVIADO:\s*([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑA-záéíóúñ \t,]+)/i,
     /([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+ (?:[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+ )*[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+),?\s*identificad[oa]\s*con\s*DNI/i,
   ];
   for (const pattern of clientPatterns) {
@@ -167,9 +168,9 @@ export async function parseDocxFile(file: File): Promise<ParsedDocument> {
   const parts: string[] = [];
 
   const denunciadoMatch = text.match(
-    /DENUNCIADO:\s*([A-ZÁÉÍÓÚÑ\s,]+)/i
+    /DENUNCIADO:\s*([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑA-záéíóúñ \t,]+)/i
   ) || text.match(
-    /contra\s*(?:el\s*ciudadano\s+)?([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ\s]+),?\s*identificad/i
+    /contra\s*(?:el\s*ciudadano\s+)?([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ \t]+),?\s*identificad/i
   );
   if (denunciadoMatch) {
     parts.push(`Denunciado: ${formatName(denunciadoMatch[1].trim())}`);
@@ -200,12 +201,13 @@ export async function parseDocxFile(file: File): Promise<ParsedDocument> {
     /MEDIOS PROBATORIOS([\s\S]*?)(?:V\.|DILIGENCIAS|POR TANTO)/i
   );
   if (docsSection) {
+    // Solo partir en ítems numerados al inicio de línea (ej: "1.- ", "2) "), no dentro de montos
     const docs = docsSection[1]
-      .split(/\d+\.-?\s*/)
-      .map((d) => d.trim())
+      .split(/\n\s*\d+[.)]\s*-?\s*/)
+      .map((d) => d.replace(/\n+/g, " ").trim())
       .filter((d) => d.length > 5)
-      .slice(0, 5) // Máximo 5 documentos
-      .join("; ");
+      .slice(0, 5)
+      .join("\n");
     if (docs) {
       caseData.documentos_pendientes = docs;
       fieldsFound.push("documentos_pendientes");
