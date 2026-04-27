@@ -358,3 +358,33 @@ export const caseDocumentosApi = {
     });
   },
 };
+
+// ============================================
+// AGENT API
+// ============================================
+export interface AgentRequest {
+  accion: "analizar" | "asesorar" | "redactar" | "normativa";
+  parametros?: {
+    tipo_escrito?: string;
+    destinatario?: string;
+    query?: string;
+    tema?: string;
+  };
+}
+
+export interface AgentResponse {
+  accion: string;
+  resultado: string;
+  tools_usados: string[];
+  tokens_usados: number;
+  cached: boolean;
+}
+
+export const agentApi = {
+  run: (casoId: number, request: AgentRequest, token: string): Promise<AgentResponse> =>
+    fetchAPI<AgentResponse>(`/api/casos/${casoId}/agente`, {
+      method: "POST",
+      token,
+      body: JSON.stringify(request),
+    }),
+};
