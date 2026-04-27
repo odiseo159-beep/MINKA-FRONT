@@ -3,6 +3,7 @@
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import rehypeSanitize from "rehype-sanitize";
 import { FileSearch, Scale, FileText, Loader2, AlertCircle, RotateCcw } from "lucide-react";
 import { agentApi, type AgentRequest, type AgentResponse } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
@@ -199,7 +200,7 @@ export function LegalAgentPanel({ casoId, tieneDocumentos }: LegalAgentPanelProp
             [&_th]:bg-gray-50 [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-semibold [&_th]:border [&_th]:border-gray-200
             [&_td]:px-3 [&_td]:py-1.5 [&_td]:border [&_td]:border-gray-200 [&_td]:align-top
             [&_hr]:border-gray-200">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{resultado.resultado}</ReactMarkdown>
+            <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>{resultado.resultado}</ReactMarkdown>
           </div>
         </div>
       )}
