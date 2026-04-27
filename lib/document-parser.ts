@@ -73,15 +73,54 @@ export async function parseDocxFile(file: File): Promise<ParsedDocument> {
 
   // --- Tipo de caso ---
   const caseTypeMap: Record<string, string> = {
-    estafa: "penal_estafa",
-    robo: "penal_robo",
-    hurto: "penal_robo",
-    lesiones: "penal_lesiones",
-    laboral: "laboral",
-    despido: "laboral",
-    alimentos: "familia_alimentos",
-    tenencia: "familia_tenencia",
-    desalojo: "civil_desalojo",
+    // Penal existente
+    estafa:                  "penal_estafa",
+    robo:                    "penal_robo",
+    hurto:                   "penal_robo",
+    lesiones:                "penal_lesiones",
+    // Penal nuevo
+    "violencia familiar":    "penal_violencia_familiar",
+    feminicidio:             "penal_violencia_familiar",
+    homicidio:               "penal_homicidio",
+    asesinato:               "penal_homicidio",
+    peculado:                "penal_corrupcion",
+    corrupcion:              "penal_corrupcion",
+    cohecho:                 "penal_corrupcion",
+    drogas:                  "penal_tid",
+    narcotrafico:            "penal_tid",
+    "trafico ilicito":       "penal_tid",
+    lavado:                  "penal_lavado",
+    "lavado de activos":     "penal_lavado",
+    // Laboral
+    laboral:                 "laboral",
+    despido:                 "laboral",
+    // Familia
+    alimentos:               "familia_alimentos",
+    tenencia:                "familia_tenencia",
+    divorcio:                "familia_divorcio",
+    "separacion de cuerpos": "familia_divorcio",
+    // Civil
+    desalojo:                "civil_desalojo",
+    // Administrativo
+    administrativo:          "administrativo_recurso",
+    contencioso:             "administrativo_contencioso",
+    // Nuevas ramas
+    sunat:                   "tributario",
+    tributario:              "tributario",
+    "tribunal fiscal":       "tributario",
+    amparo:                  "constitucional",
+    "habeas corpus":         "constitucional",
+    "accion popular":        "constitucional",
+    societario:              "comercial_societario",
+    empresa:                 "comercial_societario",
+    mercantil:               "comercial_contrato",
+    herencia:                "sucesiones",
+    testamento:              "sucesiones",
+    herederos:               "sucesiones",
+    sunarp:                  "inmobiliario",
+    hipoteca:                "inmobiliario",
+    usucapion:               "inmobiliario",
+    registral:               "inmobiliario",
   };
 
   const delitoMatch = text.match(
