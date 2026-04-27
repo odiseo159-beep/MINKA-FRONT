@@ -1,0 +1,56 @@
+<h2>¿Cómo valida Minka una imagen legal?</h2>
+<p class="subtitle">Cuando un abogado sube una imagen, ¿qué debe verificar el sistema?</p>
+
+<div class="section">
+  <p class="label">Criterios de rechazo — ¿cuáles aplican?</p>
+  <div class="options" data-multiselect>
+    <div class="option" data-choice="ilegible" onclick="toggleSelect(this)">
+      <div class="letter">A</div>
+      <div class="content">
+        <h3>Ilegible / baja calidad</h3>
+        <p>Foto borrosa, oscura, torcida o con texto irreconocible. Claude no puede extraer datos útiles.</p>
+      </div>
+    </div>
+    <div class="option" data-choice="no_legal" onclick="toggleSelect(this)">
+      <div class="letter">B</div>
+      <div class="content">
+        <h3>No es un documento legal</h3>
+        <p>Foto de comida, selfie, paisaje. No tiene relación con un caso legal peruano.</p>
+      </div>
+    </div>
+    <div class="option" data-choice="sin_texto" onclick="toggleSelect(this)">
+      <div class="letter">C</div>
+      <div class="content">
+        <h3>Sin texto extraíble</h3>
+        <p>La imagen no contiene texto suficiente para pre-llenar ningún campo del caso.</p>
+      </div>
+    </div>
+    <div class="option" data-choice="formato" onclick="toggleSelect(this)">
+      <div class="letter">D</div>
+      <div class="content">
+        <h3>Formato no soportado</h3>
+        <p>Solo aceptar JPG, PNG, WEBP — rechazar HEIC, BMP, TIFF, etc.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:32px">
+  <p class="label">¿Qué pasa si la imagen pasa validación pero extrae pocos campos?</p>
+  <div class="options">
+    <div class="option" data-choice="partial_ok" onclick="toggleSelect(this)">
+      <div class="letter">1</div>
+      <div class="content">
+        <h3>Aceptar con advertencia</h3>
+        <p>Mostrar qué campos se pudieron extraer y cuáles debe completar el abogado manualmente</p>
+      </div>
+    </div>
+    <div class="option" data-choice="partial_reject" onclick="toggleSelect(this)">
+      <div class="letter">2</div>
+      <div class="content">
+        <h3>Rechazar si extrae menos de X campos</h3>
+        <p>Mínimo de campos requeridos (ej: nombre_cliente + tipo_caso) para aceptar el documento</p>
+      </div>
+    </div>
+  </div>
+</div>

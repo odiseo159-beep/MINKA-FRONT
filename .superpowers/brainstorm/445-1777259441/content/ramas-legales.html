@@ -1,0 +1,74 @@
+<h2>¿Qué ramas legales quieres agregar?</h2>
+<p class="subtitle">Actualmente Minka cubre 4 ramas. Selecciona las que quieres incorporar en este sprint.</p>
+
+<div class="section">
+  <p class="label">Ya incluidas ✅</p>
+  <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px">
+    <span style="background:#1a2e1a;color:#4ade80;padding:6px 14px;border-radius:20px;font-size:13px">⚖️ Penal (Estafa · Robo · Lesiones)</span>
+    <span style="background:#1a2e1a;color:#4ade80;padding:6px 14px;border-radius:20px;font-size:13px">📋 Civil (Desalojo · Otro)</span>
+    <span style="background:#1a2e1a;color:#4ade80;padding:6px 14px;border-radius:20px;font-size:13px">👨‍👩‍👧 Familia (Alimentos · Tenencia)</span>
+    <span style="background:#1a2e1a;color:#4ade80;padding:6px 14px;border-radius:20px;font-size:13px">🏭 Laboral</span>
+  </div>
+</div>
+
+<div class="section">
+  <p class="label">Selecciona las ramas a agregar (multi-selección)</p>
+  <div class="options" data-multiselect>
+    <div class="option" data-choice="administrativo" onclick="toggleSelect(this)">
+      <div class="letter">A</div>
+      <div class="content">
+        <h3>Administrativo / Contencioso-Administrativo</h3>
+        <p>Recursos administrativos, nulidades, silencio administrativo, demandas contra el Estado</p>
+      </div>
+    </div>
+    <div class="option" data-choice="tributario" onclick="toggleSelect(this)">
+      <div class="letter">B</div>
+      <div class="content">
+        <h3>Tributario / Fiscal</h3>
+        <p>SUNAT, cobranza coactiva, recursos impugnativos, apelaciones ante el Tribunal Fiscal</p>
+      </div>
+    </div>
+    <div class="option" data-choice="constitucional" onclick="toggleSelect(this)">
+      <div class="letter">C</div>
+      <div class="content">
+        <h3>Constitucional</h3>
+        <p>Hábeas corpus, amparo, acción popular, inconstitucionalidad</p>
+      </div>
+    </div>
+    <div class="option" data-choice="comercial" onclick="toggleSelect(this)">
+      <div class="letter">D</div>
+      <div class="content">
+        <h3>Comercial / Societario</h3>
+        <p>Contratos mercantiles, constitución de empresas, fusiones, liquidaciones, arbitraje</p>
+      </div>
+    </div>
+    <div class="option" data-choice="sucesiones" onclick="toggleSelect(this)">
+      <div class="letter">E</div>
+      <div class="content">
+        <h3>Sucesiones / Herencias</h3>
+        <p>Declaratoria de herederos, testamentos, partición de bienes, impugnación de testamentos</p>
+      </div>
+    </div>
+    <div class="option" data-choice="inmobiliario" onclick="toggleSelect(this)">
+      <div class="letter">F</div>
+      <div class="content">
+        <h3>Inmobiliario / Registral</h3>
+        <p>Compraventa, hipotecas, inscripciones en SUNARP, usucapión, servidumbres</p>
+      </div>
+    </div>
+    <div class="option" data-choice="penal_ampliado" onclick="toggleSelect(this)">
+      <div class="letter">G</div>
+      <div class="content">
+        <h3>Penal ampliado</h3>
+        <p>Violencia familiar, homicidio, TID, corrupción de funcionarios, peculado, lavado de activos</p>
+      </div>
+    </div>
+    <div class="option" data-choice="todos" onclick="toggleSelect(this)">
+      <div class="letter">★</div>
+      <div class="content">
+        <h3>Todas las anteriores</h3>
+        <p>Incorporar todas las ramas listadas para cobertura completa</p>
+      </div>
+    </div>
+  </div>
+</div>

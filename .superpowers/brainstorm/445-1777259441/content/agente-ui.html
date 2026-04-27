@@ -1,0 +1,85 @@
+<h2>Panel "Agente Legal" — layout en detalle de caso</h2>
+<p class="subtitle">¿Cómo debería organizarse el panel dentro de la página del caso?</p>
+
+<div class="options">
+  <div class="option" data-choice="tab" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Tab separado (junto a Chat y Documentos)</h3>
+      <div class="mockup" style="margin-top:12px">
+        <div class="mockup-header">Caso #1234 — Jorge Paredes</div>
+        <div class="mockup-body" style="padding:0">
+          <div style="display:flex;border-bottom:1px solid #333;background:#1a1a2e">
+            <div style="padding:10px 16px;font-size:12px;color:#666">Detalle</div>
+            <div style="padding:10px 16px;font-size:12px;color:#666">Documentos</div>
+            <div style="padding:10px 16px;font-size:12px;color:#666">Chat</div>
+            <div style="padding:10px 16px;font-size:12px;color:#C0392B;border-bottom:2px solid #C0392B;font-weight:600">⚖️ Agente Legal</div>
+          </div>
+          <div style="padding:16px">
+            <div style="display:flex;gap:8px;margin-bottom:16px">
+              <button style="background:#C0392B;color:white;border:none;padding:8px 14px;border-radius:6px;font-size:12px">🔍 Analizar doc</button>
+              <button style="background:#1e3a5f;color:#60a5fa;border:1px solid #1e40af;padding:8px 14px;border-radius:6px;font-size:12px">⚖️ Asesor</button>
+              <button style="background:#1e3a5f;color:#60a5fa;border:1px solid #1e40af;padding:8px 14px;border-radius:6px;font-size:12px">📝 Redactar</button>
+              <button style="background:#1e3a5f;color:#60a5fa;border:1px solid #1e40af;padding:8px 14px;border-radius:6px;font-size:12px">📚 Normativa</button>
+            </div>
+            <div style="background:#0f1923;border-radius:8px;padding:14px;font-size:12px;color:#94a3b8;min-height:80px">
+              El agente analizará el expediente y documentos del caso para brindarte orientación legal.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="sidebar" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Panel lateral fijo (siempre visible en detalle)</h3>
+      <div class="mockup" style="margin-top:12px">
+        <div class="mockup-header">Caso #1234 — Jorge Paredes</div>
+        <div class="mockup-body" style="padding:0;display:flex;gap:0">
+          <div style="flex:1;padding:14px;font-size:12px;color:#94a3b8;border-right:1px solid #1e293b">
+            <div style="color:#e2e8f0;margin-bottom:8px;font-weight:600">Detalle del caso</div>
+            <div style="margin-bottom:4px">Cliente: Jorge Paredes</div>
+            <div style="margin-bottom:4px">Tipo: Penal - Estafa</div>
+            <div style="margin-bottom:4px">Estado: En trámite</div>
+            <div style="margin-top:12px;color:#e2e8f0;font-weight:600">Documentos</div>
+            <div style="margin-top:4px;color:#60a5fa">📎 denuncia.pdf</div>
+          </div>
+          <div style="width:220px;padding:14px;background:#0f1923">
+            <div style="color:#C0392B;font-weight:600;font-size:12px;margin-bottom:12px">⚖️ Agente Legal</div>
+            <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px">
+              <button style="background:#C0392B;color:white;border:none;padding:7px 10px;border-radius:5px;font-size:11px;text-align:left">🔍 Analizar documento</button>
+              <button style="background:#1e3a5f;color:#60a5fa;border:1px solid #1e40af;padding:7px 10px;border-radius:5px;font-size:11px;text-align:left">⚖️ Asesor estratégico</button>
+              <button style="background:#1e3a5f;color:#60a5fa;border:1px solid #1e40af;padding:7px 10px;border-radius:5px;font-size:11px;text-align:left">📝 Redactar escrito</button>
+              <button style="background:#1e3a5f;color:#60a5fa;border:1px solid #1e40af;padding:7px 10px;border-radius:5px;font-size:11px;text-align:left">📚 Buscar normativa</button>
+            </div>
+            <div style="background:#1a2535;border-radius:6px;padding:10px;font-size:11px;color:#64748b;min-height:60px">
+              Selecciona una acción...
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="floating" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Botón flotante / modal</h3>
+      <div class="mockup" style="margin-top:12px">
+        <div class="mockup-header">Caso #1234 — Jorge Paredes</div>
+        <div class="mockup-body" style="padding:14px;position:relative;min-height:120px">
+          <div style="font-size:12px;color:#94a3b8">
+            <div style="color:#e2e8f0;margin-bottom:8px;font-weight:600">Detalle del caso</div>
+            <div>Cliente: Jorge Paredes | Tipo: Penal - Estafa</div>
+          </div>
+          <div style="position:absolute;bottom:12px;right:12px">
+            <div style="background:#C0392B;color:white;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 4px 12px rgba(192,57,43,0.4)">⚖️</div>
+          </div>
+        </div>
+      </div>
+      <p style="margin-top:8px;font-size:13px;color:#64748b">El abogado lo abre cuando lo necesita, sin ocupar espacio permanente</p>
+    </div>
+  </div>
+</div>
