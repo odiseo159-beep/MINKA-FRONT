@@ -8,6 +8,7 @@ describe("CaseType labels", () => {
       "penal_tid", "penal_lavado", "administrativo_recurso",
       "administrativo_contencioso", "tributario", "constitucional",
       "comercial_contrato", "comercial_societario", "sucesiones", "inmobiliario",
+      "familia_divorcio",
     ];
     for (const t of expectedTypes) {
       expect(CASE_TYPE_LABELS[t]).toBeDefined();
