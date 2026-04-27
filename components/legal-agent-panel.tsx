@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { FileSearch, Scale, FileText, BookOpen, Loader2, AlertCircle, RotateCcw } from "lucide-react";
+import { FileSearch, Scale, FileText, Loader2, AlertCircle, RotateCcw } from "lucide-react";
 import { agentApi, type AgentRequest, type AgentResponse } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
 
@@ -11,7 +11,7 @@ interface LegalAgentPanelProps {
   tieneDocumentos: boolean;
 }
 
-type Accion = "analizar" | "asesorar" | "redactar" | "normativa";
+type Accion = "analizar" | "asesorar" | "redactar";
 type PanelState = "idle" | "loading" | "success" | "error";
 
 const ACCIONES = [
@@ -36,13 +36,6 @@ const ACCIONES = [
     description: "Borrador de escrito con formato legal peruano",
     requiereDocumentos: false,
   },
-  {
-    id: "normativa" as Accion,
-    label: "Buscar normativa",
-    icon: BookOpen,
-    description: "Artículos del CP, CPP, CC, NLPT, Ley 30364, etc.",
-    requiereDocumentos: false,
-  },
 ] as const;
 
 const TIPOS_ESCRITO = [
@@ -65,7 +58,6 @@ export function LegalAgentPanel({ casoId, tieneDocumentos }: LegalAgentPanelProp
 
   const [tipoEscrito, setTipoEscrito] = useState("");
   const [destinatario, setDestinatario] = useState("");
-  const [queryNormativa, setQueryNormativa] = useState("");
 
   const ejecutar = async (accion: Accion) => {
     setAccionActiva(accion);
@@ -77,8 +69,6 @@ export function LegalAgentPanel({ casoId, tieneDocumentos }: LegalAgentPanelProp
     if (accion === "redactar") {
       parametros.tipo_escrito = tipoEscrito;
       parametros.destinatario = destinatario;
-    } else if (accion === "normativa") {
-      parametros.query = queryNormativa;
     }
 
     try {
@@ -105,7 +95,7 @@ export function LegalAgentPanel({ casoId, tieneDocumentos }: LegalAgentPanelProp
             <button
               key={id}
               onClick={() => {
-                if (id === "redactar" || id === "normativa") {
+                if (id === "redactar") {
                   setAccionActiva(id);
                   setState("idle");
                 } else {
@@ -156,25 +146,6 @@ export function LegalAgentPanel({ casoId, tieneDocumentos }: LegalAgentPanelProp
         </div>
       )}
 
-      {accionActiva === "normativa" && state !== "success" && (
-        <div className="flex gap-2 rounded-lg border border-gray-200 bg-gray-50 p-3">
-          <input
-            type="text"
-            value={queryNormativa}
-            onChange={(e) => setQueryNormativa(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && queryNormativa && ejecutar("normativa")}
-            placeholder="ej: plazo prescripción estafa, art 387 peculado..."
-            className="flex-1 rounded border border-gray-300 px-2 py-1.5 text-sm"
-          />
-          <button
-            onClick={() => ejecutar("normativa")}
-            disabled={!queryNormativa || state === "loading"}
-            className="rounded bg-minka-500 px-3 py-1.5 text-sm text-white hover:bg-minka-600 disabled:opacity-40"
-          >
-            Buscar
-          </button>
-        </div>
-      )}
 
       {state === "loading" && (
         <div className="flex items-center gap-3 rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-700">

@@ -266,7 +266,7 @@ export default function CaseDetailPage() {
                 <Lock className="w-5 h-5 text-amber-600" aria-hidden="true" />
                 <h2 className="text-lg font-semibold text-amber-900">Notas internas</h2>
               </div>
-              <p className="text-amber-800 whitespace-pre-wrap">{caso.notas}</p>
+              <p className="text-amber-800 whitespace-pre-wrap">{caso.notas.replace(/\n{3,}/g, "\n\n").trim()}</p>
               <p className="text-xs text-amber-600 mt-4">
                 Estas notas no se comparten con el cliente
               </p>

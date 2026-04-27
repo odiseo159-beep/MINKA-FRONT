@@ -20,12 +20,12 @@ vi.mock("@/lib/auth-store", () => ({
 }));
 
 describe("LegalAgentPanel", () => {
-  it("muestra los 4 botones de acción", () => {
+  it("muestra los 3 botones de acción", () => {
     render(<LegalAgentPanel casoId={1} tieneDocumentos={true} />);
     expect(screen.getByText(/Analizar/i)).toBeInTheDocument();
     expect(screen.getByText(/Asesor/i)).toBeInTheDocument();
     expect(screen.getByText(/Redactar/i)).toBeInTheDocument();
-    expect(screen.getByText(/Normativa/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Normativa/i)).not.toBeInTheDocument();
   });
 
   it("deshabilita Analizar si no hay documentos", () => {
@@ -53,15 +53,4 @@ describe("LegalAgentPanel", () => {
     runSpy.mockRestore();
   });
 
-  it("no llama al API al hacer click en Normativa (espera query)", async () => {
-    const { agentApi } = await import("@/lib/api");
-    const runSpy = vi.spyOn(agentApi, "run");
-    runSpy.mockClear();
-    const user = userEvent.setup();
-    render(<LegalAgentPanel casoId={1} tieneDocumentos={true} />);
-    await user.click(screen.getByRole("button", { name: /Normativa/i }));
-    expect(runSpy).not.toHaveBeenCalled();
-    expect(screen.getByPlaceholderText(/prescripción/i)).toBeInTheDocument();
-    runSpy.mockRestore();
-  });
 });

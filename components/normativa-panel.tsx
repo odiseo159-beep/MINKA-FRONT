@@ -32,6 +32,7 @@ interface NormativaPanelProps {
 }
 
 export function NormativaPanel({ tipoCaso, notas }: NormativaPanelProps) {
+  const [expanded, setExpanded] = useState(false);
   const [expandedArticle, setExpandedArticle] = useState<number | null>(null);
   const [customQuery, setCustomQuery] = useState("");
   const [showSearch, setShowSearch] = useState(false);
@@ -42,19 +43,39 @@ export function NormativaPanel({ tipoCaso, notas }: NormativaPanelProps) {
   const { data, isLoading, error } = useNormativa(
     query,
     customQuery ? undefined : codigos,
-    true
+    expanded
   );
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6">
-      <div className="flex items-center justify-between mb-4">
+    <div className="bg-white rounded-xl border border-gray-200">
+      <button
+        type="button"
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-gray-50 transition-colors rounded-xl"
+      >
         <div className="flex items-center gap-2">
           <BookOpen className="w-5 h-5 text-minka-500" />
           <h2 className="text-lg font-semibold text-gray-900">Normativa aplicable</h2>
+          {data && data.articulos.length > 0 && (
+            <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full">
+              {data.articulos.length}
+            </span>
+          )}
         </div>
+        {expanded ? (
+          <ChevronUp className="w-4 h-4 text-gray-400 flex-shrink-0" />
+        ) : (
+          <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />
+        )}
+      </button>
+
+      {expanded && (
+      <div className="px-6 pb-6">
+      <div className="flex items-center justify-between mb-4">
+        <div />
         <button
           type="button"
-          onClick={() => setShowSearch(!showSearch)}
+          onClick={(e) => { e.stopPropagation(); setShowSearch(!showSearch); }}
           className="text-gray-400 hover:text-minka-500 transition-colors"
           title="Buscar normativa"
         >
@@ -170,6 +191,8 @@ export function NormativaPanel({ tipoCaso, notas }: NormativaPanelProps) {
         <p className="text-sm text-gray-400 text-center py-4">
           Ingresa datos del caso para ver normativa sugerida.
         </p>
+      )}
+      </div>
       )}
     </div>
   );
