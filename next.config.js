@@ -12,12 +12,29 @@ const nextConfig = {
   async headers() {
     return [
       {
-        // Only apply no-cache to HTML page routes, not to _next/static assets
         source: "/((?!_next/static|_next/image|favicon.ico).*)",
         headers: [
+          { key: "Cache-Control", value: "no-store, must-revalidate" },
+          // Previene clickjacking — la app no debe embeberse en iframes externos
+          { key: "X-Frame-Options", value: "DENY" },
+          // Evita que el navegador adivine el content-type (MIME sniffing)
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          // Activa el filtro XSS del navegador (legacy, complementa CSP)
+          { key: "X-XSS-Protection", value: "1; mode=block" },
+          // No enviar Referer a sitios externos
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          // Solo carga recursos del mismo origen + el backend en Railway
           {
-            key: "Cache-Control",
-            value: "no-store, must-revalidate",
+            key: "Content-Security-Policy",
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data: blob:",
+              "connect-src 'self' https://katia-jorkat-production.up.railway.app",
+              "font-src 'self'",
+              "frame-ancestors 'none'",
+            ].join("; "),
           },
         ],
       },
