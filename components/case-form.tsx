@@ -7,7 +7,7 @@ import { z } from "zod";
 import { Upload, FileText, CheckCircle, AlertCircle, X } from "lucide-react";
 import type { Case, CaseFormData } from "@/types";
 import { STATUS_LABELS, CASE_TYPE_LABELS } from "@/types";
-import { parseDocxFile, mapBackendResponse, type ParsedDocument } from "@/lib/document-parser";
+import { parseDocxFile, mapBackendResponse, parseImageFile, type ParsedDocument } from "@/lib/document-parser";
 import { documentApi } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
 
@@ -66,11 +66,11 @@ export function CaseForm({ initialData, onSubmit, onCancel, isLoading }: CaseFor
 
   const handleFile = useCallback(async (file: File) => {
     const ext = file.name.split(".").pop()?.toLowerCase();
-    const allowedExts = ["docx", "pdf"];
+    const allowedExts = ["docx", "pdf", "jpg", "jpeg", "png", "webp"];
 
     if (!ext || !allowedExts.includes(ext)) {
       setUploadState("error");
-      setUploadError("Solo se aceptan archivos .docx y .pdf");
+      setUploadError("Solo se aceptan archivos .docx, .pdf, .jpg, .png y .webp");
       return;
     }
 
@@ -88,7 +88,11 @@ export function CaseForm({ initialData, onSubmit, onCancel, isLoading }: CaseFor
     try {
       let result: ParsedDocument;
 
-      if (ext === "docx") {
+      const isImage = ["jpg", "jpeg", "png", "webp"].includes(ext);
+
+      if (isImage) {
+        result = await parseImageFile(file, token || "");
+      } else if (ext === "docx") {
         // Client-side parsing con mammoth.js
         result = await parseDocxFile(file);
       } else {
@@ -179,7 +183,7 @@ export function CaseForm({ initialData, onSubmit, onCancel, isLoading }: CaseFor
             <div
               role="button"
               tabIndex={0}
-              aria-label="Subir documento del caso. Haz clic o arrastra un archivo .docx o .pdf"
+              aria-label="Subir documento del caso. Haz clic o arrastra un archivo .docx, .pdf, .jpg, .png o .webp"
               onDrop={handleDrop}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
@@ -200,12 +204,12 @@ export function CaseForm({ initialData, onSubmit, onCancel, isLoading }: CaseFor
                 {" "}o arrastra aquí
               </p>
               <p className="text-xs text-gray-400 mt-1">
-                .docx, .pdf (denuncias, demandas, resoluciones, documentos escaneados)
+                DOCX, PDF, JPG, PNG o WEBP — máx. 10 MB
               </p>
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".docx,.pdf"
+                accept=".docx,.pdf,.jpg,.jpeg,.png,.webp"
                 className="hidden"
                 onChange={(e) => {
                   const file = e.target.files?.[0];

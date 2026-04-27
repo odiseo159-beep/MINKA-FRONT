@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { parseImageFile } from "@/lib/document-parser";
 
 // Referencia al mapa que queremos verificar en la implementación
 const caseTypeMap: Record<string, string> = {
@@ -49,5 +50,18 @@ describe("caseTypeMap keywords", () => {
     expect(caseTypeMap["amparo"]).toBe("constitucional");
     expect(caseTypeMap["sunarp"]).toBe("inmobiliario");
     expect(caseTypeMap["herencia"]).toBe("sucesiones");
+  });
+});
+
+describe("parseImageFile", () => {
+  it("rechaza formatos no soportados (heic)", async () => {
+    const heicFile = new File([new Uint8Array([1, 2, 3])], "foto.heic", { type: "image/heic" });
+    await expect(parseImageFile(heicFile, "token")).rejects.toThrow("Solo se aceptan JPG, PNG y WEBP");
+  });
+
+  it("rechaza archivos mayores a 10MB", async () => {
+    const bigBuffer = new Uint8Array(11 * 1024 * 1024);
+    const bigFile = new File([bigBuffer], "grande.jpg", { type: "image/jpeg" });
+    await expect(parseImageFile(bigFile, "token")).rejects.toThrow("no debe superar 10 MB");
   });
 });

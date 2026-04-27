@@ -241,6 +241,50 @@ function toTitleCase(str: string): string {
     .join(" ");
 }
 
+const ALLOWED_IMAGE_EXTS = ["jpg", "jpeg", "png", "webp"];
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
+
+/**
+ * Envía una imagen al backend para extracción de datos via Claude Vision.
+ * Valida formato y tamaño antes de enviar.
+ * Las imágenes se envían al servidor (a diferencia de DOCX que es 100% client-side).
+ */
+export async function parseImageFile(file: File, token: string): Promise<ParsedDocument> {
+  const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+
+  if (!ALLOWED_IMAGE_EXTS.includes(ext)) {
+    throw new Error("Solo se aceptan JPG, PNG y WEBP. Formatos como HEIC, BMP o TIFF no son compatibles.");
+  }
+
+  if (file.size > MAX_IMAGE_SIZE) {
+    throw new Error("El archivo no debe superar 10 MB.");
+  }
+
+  const formData = new FormData();
+  formData.append("archivo", file);
+
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  const res = await fetch(`${API_URL}/api/casos/extraer-documento`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: "Error al procesar la imagen" }));
+    throw new Error(err.detail || "Error al procesar la imagen");
+  }
+
+  const data = await res.json();
+
+  // Imagen rechazada por validación (ilegible, no legal, sin texto)
+  if (data.rejection_reason || data.legible === false || data.es_legal === false) {
+    throw new Error(data.advertencias?.[0] || data.rejection_reason || "Imagen no válida como documento legal.");
+  }
+
+  return mapBackendResponse(data);
+}
+
 /**
  * Convierte la respuesta del backend (POST /api/casos/extraer-documento)
  * al formato ParsedDocument que usa el formulario de caso.
