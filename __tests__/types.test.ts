@@ -16,7 +16,10 @@ describe("CaseType labels", () => {
 
   it("incluye nuevos códigos legales", () => {
     expect(CODIGO_LABELS["L30364"]).toBeDefined();
+    expect(CODIGO_LABELS["L29497"]).toBeDefined();
     expect(CODIGO_LABELS["LPAG"]).toBeDefined();
+    expect(CODIGO_LABELS["CT"]).toBeDefined();
     expect(CODIGO_LABELS["LGS"]).toBeDefined();
+    expect(CODIGO_LABELS["CPCo"]).toBeDefined();
   });
 });
