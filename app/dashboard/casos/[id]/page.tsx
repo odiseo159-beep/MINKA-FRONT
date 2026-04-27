@@ -23,6 +23,7 @@ import {
 import { NormativaPanel } from "@/components/normativa-panel";
 import { CasoChatPanel } from "@/components/caso-chat-panel";
 import { DocumentosPanel } from "@/components/documentos-panel";
+import { LegalAgentPanel } from "@/components/legal-agent-panel";
 import { casesApi } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
 import { useDocumentosCaso } from "@/hooks/use-documentos";
@@ -40,8 +41,10 @@ export default function CaseDetailPage() {
 
   const [aiSeedQuery, setAiSeedQuery] = useState<string | undefined>(undefined);
   const chatSectionRef = useRef<HTMLDivElement>(null);
+  const [activeTab, setActiveTab] = useState<"detalle" | "agente">("detalle");
 
   const triggerAiAction = (query: string) => {
+    setActiveTab("detalle");
     setAiSeedQuery(query);
     setTimeout(() => chatSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
   };
@@ -167,6 +170,38 @@ export default function CaseDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main info */}
         <div className="lg:col-span-2 space-y-6">
+          {/* Tab navigation */}
+          <div className="flex gap-1 border-b border-gray-200">
+            {([
+              { id: "detalle", label: "Detalle" },
+              { id: "agente", label: "⚖️ Agente Legal" },
+            ] as const).map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
+                  activeTab === tab.id
+                    ? "border-minka-500 text-minka-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {activeTab === "agente" && (
+            <div className="p-4">
+              <LegalAgentPanel
+                casoId={caso.id}
+                tieneDocumentos={
+                  !!caso.documento_texto || !!caso.documento_url || (documentosNuevos?.length ?? 0) > 0
+                }
+              />
+            </div>
+          )}
+
+          {activeTab === "detalle" && <>
           {/* Status card */}
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-6">
@@ -250,6 +285,7 @@ export default function CaseDetailPage() {
               onSeedConsumed={() => setAiSeedQuery(undefined)}
             />
           </div>
+          </>}
         </div>
 
         {/* Sidebar */}
