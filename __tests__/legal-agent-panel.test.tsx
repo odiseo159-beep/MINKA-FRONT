@@ -40,4 +40,28 @@ describe("LegalAgentPanel", () => {
     await user.click(screen.getByRole("button", { name: /Asesor/i }));
     expect(await screen.findByText(/Estrategia/i)).toBeInTheDocument();
   });
+
+  it("no llama al API al hacer click en Redactar (espera sub-form)", async () => {
+    const { agentApi } = await import("@/lib/api");
+    const runSpy = vi.spyOn(agentApi, "run");
+    runSpy.mockClear();
+    const user = userEvent.setup();
+    render(<LegalAgentPanel casoId={1} tieneDocumentos={true} />);
+    await user.click(screen.getByRole("button", { name: /Redactar/i }));
+    expect(runSpy).not.toHaveBeenCalled();
+    expect(screen.getByText(/Tipo de escrito/i)).toBeInTheDocument();
+    runSpy.mockRestore();
+  });
+
+  it("no llama al API al hacer click en Normativa (espera query)", async () => {
+    const { agentApi } = await import("@/lib/api");
+    const runSpy = vi.spyOn(agentApi, "run");
+    runSpy.mockClear();
+    const user = userEvent.setup();
+    render(<LegalAgentPanel casoId={1} tieneDocumentos={true} />);
+    await user.click(screen.getByRole("button", { name: /Normativa/i }));
+    expect(runSpy).not.toHaveBeenCalled();
+    expect(screen.getByPlaceholderText(/prescripción/i)).toBeInTheDocument();
+    runSpy.mockRestore();
+  });
 });

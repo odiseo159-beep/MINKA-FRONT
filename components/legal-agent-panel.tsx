@@ -104,7 +104,14 @@ export function LegalAgentPanel({ casoId, tieneDocumentos }: LegalAgentPanelProp
           return (
             <button
               key={id}
-              onClick={() => ejecutar(id)}
+              onClick={() => {
+                if (id === "redactar" || id === "normativa") {
+                  setAccionActiva(id);
+                  setState("idle");
+                } else {
+                  ejecutar(id);
+                }
+              }}
               disabled={disabled}
               title={requiereDocumentos && !tieneDocumentos ? "Sube un documento primero" : description}
               className={`flex flex-col items-start gap-1 rounded-lg border px-3 py-2.5 text-left text-sm transition-colors
