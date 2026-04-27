@@ -12,14 +12,34 @@ export type CaseStatus =
   | "archivado";
 
 export type CaseType =
+  // Penal — existentes
   | "penal_estafa"
   | "penal_robo"
   | "penal_lesiones"
+  // Penal — nuevos
+  | "penal_violencia_familiar"
+  | "penal_homicidio"
+  | "penal_corrupcion"
+  | "penal_tid"
+  | "penal_lavado"
+  // Laboral
   | "laboral"
+  // Familia
   | "familia_alimentos"
   | "familia_tenencia"
+  | "familia_divorcio"
+  // Civil
   | "civil_desalojo"
-  | "civil_otro";
+  | "civil_otro"
+  // Nuevas ramas
+  | "administrativo_recurso"
+  | "administrativo_contencioso"
+  | "tributario"
+  | "constitucional"
+  | "comercial_contrato"
+  | "comercial_societario"
+  | "sucesiones"
+  | "inmobiliario";
 
 export interface Case {
   id: number;
@@ -181,7 +201,12 @@ export const CODIGO_LABELS: Record<string, string> = {
   CONST: "Constitución Política del Perú",
   NLPT: "Nueva Ley Procesal del Trabajo",
   L30077: "Ley 30077 - Crimen Organizado",
-  L30364: "Ley 30364 - Violencia contra la Mujer",
+  L30364: "Ley 30364 — Violencia contra la Mujer",
+  L29497: "Ley 29497 — Nueva Ley Procesal del Trabajo",
+  LPAG: "Ley 27444 — Procedimiento Administrativo General",
+  CT: "Código Tributario",
+  LGS: "Ley General de Sociedades (Ley 26887)",
+  CPCo: "Código Procesal Constitucional",
 };
 
 // ============================================
@@ -229,17 +254,37 @@ export const STATUS_COLORS: Record<string, string> = {
 };
 
 export const CASE_TYPE_LABELS: Record<string, string> = {
-  penal_estafa: "Penal - Estafa",
-  penal_robo: "Penal - Robo",
-  penal_lesiones: "Penal - Lesiones",
-  laboral: "Laboral",
-  familia_alimentos: "Familia - Alimentos",
-  familia_tenencia: "Familia - Tenencia",
-  civil_desalojo: "Civil - Desalojo",
-  civil_otro: "Civil - Otro",
-  // Backend string values
+  // Penal
+  penal_estafa:              "Penal — Estafa",
+  penal_robo:                "Penal — Robo",
+  penal_lesiones:            "Penal — Lesiones",
+  penal_violencia_familiar:  "Penal — Violencia Familiar (Ley 30364)",
+  penal_homicidio:           "Penal — Homicidio",
+  penal_corrupcion:          "Penal — Corrupción de Funcionarios",
+  penal_tid:                 "Penal — TID (Narcotráfico)",
+  penal_lavado:              "Penal — Lavado de Activos",
+  // Laboral
+  laboral:                   "Laboral",
+  // Familia
+  familia_alimentos:         "Familia — Alimentos",
+  familia_tenencia:          "Familia — Tenencia",
+  familia_divorcio:          "Familia — Divorcio",
+  // Civil
+  civil_desalojo:            "Civil — Desalojo",
+  civil_otro:                "Civil — Otro",
+  // Administrativo
+  administrativo_recurso:    "Administrativo — Recurso",
+  administrativo_contencioso: "Administrativo — Contencioso",
+  // Otras ramas
+  tributario:                "Tributario / Fiscal",
+  constitucional:            "Constitucional (Amparo / Hábeas Corpus)",
+  comercial_contrato:        "Comercial — Contratos",
+  comercial_societario:      "Comercial — Societario",
+  sucesiones:                "Sucesiones / Herencias",
+  inmobiliario:              "Inmobiliario / Registral (SUNARP)",
+  // Strings libres que llegan del backend
   "Alimentos": "Alimentos",
-  "Penal - Estafa": "Penal - Estafa",
+  "Penal - Estafa": "Penal — Estafa",
   "Laboral": "Laboral",
-  "Civil - Desalojo": "Civil - Desalojo",
+  "Civil - Desalojo": "Civil — Desalojo",
 };

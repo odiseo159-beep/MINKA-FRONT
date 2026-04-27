@@ -76,7 +76,7 @@ describe("casesByType", () => {
 
   it("uses CASE_TYPE_LABELS for known types", () => {
     const result = casesByType([makeCase({ id: 10, tipo_caso: "penal_robo" })]);
-    expect(result[0].name).toBe("Penal - Robo");
+    expect(result[0].name).toBe("Penal — Robo");
   });
 
   it("falls back to raw key for unknown types", () => {
