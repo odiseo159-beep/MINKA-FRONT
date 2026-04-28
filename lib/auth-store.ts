@@ -5,6 +5,25 @@ import { persist } from "zustand/middleware";
 import type { User, LoginCredentials, RegisterCredentials, AuthState } from "@/types";
 import { authApi } from "@/lib/api";
 
+/** Limpia flags de tours / onboarding del navegador. Compartidos por device,
+ * no por cuenta — si los dejamos puestos, el próximo usuario en este browser
+ * no vería los tours. */
+function clearTourFlags(): void {
+  if (typeof window === "undefined") return;
+  try {
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (key.startsWith("minka_tour_") || key === "minka_onboarding_done")) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach((k) => localStorage.removeItem(k));
+  } catch {
+    // localStorage puede fallar en modo privado / cookies bloqueadas
+  }
+}
+
 /** Decode JWT payload (client-side, no verification). Returns exp as unix timestamp or null. */
 function getTokenExp(token: string): number | null {
   try {
@@ -56,6 +75,9 @@ export const useAuthStore = create<AuthStore>()(
         set({ isLoading: true });
         try {
           const response = await authApi.register(credentials);
+          // Cuenta nueva: arrancar con tours frescos aunque el navegador
+          // tenga flags de una sesión anterior (otra cuenta, prueba previa).
+          clearTourFlags();
           set({
             user: response.usuario,
             token: response.access_token,
@@ -74,6 +96,7 @@ export const useAuthStore = create<AuthStore>()(
         } catch {
           // Ignore logout errors
         }
+        clearTourFlags();
         set({
           user: null,
           token: null,
