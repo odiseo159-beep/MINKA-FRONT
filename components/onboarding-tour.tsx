@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { ChevronRight } from "lucide-react";
 
-const STORAGE_KEY = "minka_onboarding_done";
+const DEFAULT_STORAGE_KEY = "minka_onboarding_done";
 const PADDING = 12;
 
 interface Step {
@@ -13,7 +13,7 @@ interface Step {
   placement?: "top" | "bottom" | "left" | "right" | "center";
 }
 
-const STEPS: Step[] = [
+const DEFAULT_STEPS: Step[] = [
   {
     title: "Bienvenido a Minka",
     body: "Tu asistente legal con IA para gestionar casos y mantener informados a tus clientes por WhatsApp. Te mostramos lo más importante.",
@@ -51,21 +51,29 @@ interface SpotlightRect {
   height: number;
 }
 
-export function OnboardingTour() {
+interface OnboardingTourProps {
+  steps?: Step[];
+  storageKey?: string;
+}
+
+export function OnboardingTour({
+  steps = DEFAULT_STEPS,
+  storageKey = DEFAULT_STORAGE_KEY,
+}: OnboardingTourProps) {
   const [step, setStep] = useState(0);
   const [active, setActive] = useState(false);
   const [spotlight, setSpotlight] = useState<SpotlightRect | null>(null);
   const [tooltipStyle, setTooltipStyle] = useState<React.CSSProperties>({});
 
-  const currentStep = STEPS[step];
+  const currentStep = steps[step];
 
   useEffect(() => {
-    const done = localStorage.getItem(STORAGE_KEY);
+    const done = localStorage.getItem(storageKey);
     if (!done) {
       const t = setTimeout(() => setActive(true), 900);
       return () => clearTimeout(t);
     }
-  }, []);
+  }, [storageKey]);
 
   const computePositions = useCallback(() => {
     if (!active) return;
@@ -135,18 +143,18 @@ export function OnboardingTour() {
   }, [computePositions]);
 
   const handleNext = useCallback(() => {
-    if (step < STEPS.length - 1) {
+    if (step < steps.length - 1) {
       setStep((s) => s + 1);
     } else {
-      localStorage.setItem(STORAGE_KEY, "true");
+      localStorage.setItem(storageKey, "true");
       setActive(false);
     }
-  }, [step]);
+  }, [step, steps.length, storageKey]);
 
   const handleSkip = useCallback(() => {
-    localStorage.setItem(STORAGE_KEY, "true");
+    localStorage.setItem(storageKey, "true");
     setActive(false);
-  }, []);
+  }, [storageKey]);
 
   if (!active) return null;
 
@@ -159,7 +167,7 @@ export function OnboardingTour() {
           aria-hidden="true"
         >
           <defs>
-            <mask id="minka-spotlight">
+            <mask id={`minka-spotlight-${storageKey}`}>
               <rect width="100%" height="100%" fill="white" />
               <rect
                 x={spotlight.left - PADDING}
@@ -171,7 +179,7 @@ export function OnboardingTour() {
               />
             </mask>
           </defs>
-          <rect width="100%" height="100%" fill="rgba(0,0,0,0.65)" mask="url(#minka-spotlight)" />
+          <rect width="100%" height="100%" fill="rgba(0,0,0,0.65)" mask={`url(#minka-spotlight-${storageKey})`} />
         </svg>
       ) : (
         <div
@@ -201,10 +209,10 @@ export function OnboardingTour() {
         style={{ ...tooltipStyle, zIndex: 9002 }}
         className="fixed bg-white rounded-2xl shadow-2xl border border-gray-100 p-5"
         role="dialog"
-        aria-label={`Tour paso ${step + 1} de ${STEPS.length}: ${currentStep.title}`}
+        aria-label={`Tour paso ${step + 1} de ${steps.length}: ${currentStep.title}`}
       >
         <div className="flex items-center gap-1 mb-3">
-          {STEPS.map((_, i) => (
+          {steps.map((_, i) => (
             <div
               key={i}
               className={`h-1 rounded-full transition-all duration-300 ${
@@ -219,7 +227,7 @@ export function OnboardingTour() {
         </div>
 
         <p className="text-[11px] font-semibold text-minka-500 uppercase tracking-wider mb-1">
-          {step + 1} / {STEPS.length}
+          {step + 1} / {steps.length}
         </p>
         <h3 className="font-semibold text-gray-900 mb-2 text-sm leading-snug">
           {currentStep.title}
@@ -239,7 +247,7 @@ export function OnboardingTour() {
             onClick={handleNext}
             className="flex items-center gap-1.5 px-4 py-2 bg-minka-500 text-white rounded-lg text-sm font-medium hover:bg-minka-600 transition-colors"
           >
-            {step === STEPS.length - 1 ? "¡Empezar!" : "Siguiente"}
+            {step === steps.length - 1 ? "¡Empezar!" : "Siguiente"}
             <ChevronRight className="w-3.5 h-3.5" />
           </button>
         </div>

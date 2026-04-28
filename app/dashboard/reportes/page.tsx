@@ -2,6 +2,22 @@
 
 import { useState, useMemo, useRef, useCallback } from "react";
 import Link from "next/link";
+import { OnboardingTour } from "@/components/onboarding-tour";
+
+const REPORTES_TOUR_STEPS = [
+  {
+    target: "reportes-graficos",
+    title: "Reportes y gráficos",
+    body: "Visualiza la distribución de tus casos por estado, tipo y evolución mensual. Filtra por período con los botones de arriba.",
+    placement: "bottom" as const,
+  },
+  {
+    target: "reportes-exportar",
+    title: "Exportar reporte",
+    body: "Descarga el reporte completo como PDF para compartirlo o archivarlo.",
+    placement: "bottom" as const,
+  },
+];
 import { BarChart3, AlertTriangle, ArrowRight, Calendar, Users, Download, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -176,6 +192,7 @@ export default function ReportesPage() {
         </div>
         <div className="flex items-center gap-2">
           <button
+            data-tour="reportes-exportar"
             onClick={exportPDF}
             disabled={exporting}
             className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50"
@@ -211,7 +228,7 @@ export default function ReportesPage() {
       </div>
 
       {/* Reportable content */}
-      <div ref={reportRef}>
+      <div ref={reportRef} data-tour="reportes-graficos">
 
       {/* Stats summary */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -400,6 +417,8 @@ export default function ReportesPage() {
       </div>
 
       </div>{/* end reportRef */}
+
+      <OnboardingTour steps={REPORTES_TOUR_STEPS} storageKey="minka_tour_reportes" />
     </div>
   );
 }

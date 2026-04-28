@@ -4,7 +4,7 @@ import { useState, useRef, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Upload, FileText, CheckCircle, AlertCircle, X } from "lucide-react";
+import { Upload, FileText, CheckCircle, AlertCircle, X, Plus } from "lucide-react";
 import type { Case, CaseFormData } from "@/types";
 import { STATUS_LABELS, CASE_TYPE_LABELS } from "@/types";
 import { parseDocxFile, mapBackendResponse, parseImageFile, type ParsedDocument } from "@/lib/document-parser";
@@ -12,7 +12,6 @@ import { documentApi } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
 import { HintTooltip } from "@/components/hint-tooltip";
 
-// Validation schema
 const caseSchema = z.object({
   nombre_cliente: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
   telefono: z.string().min(9, "El teléfono debe tener al menos 9 dígitos"),
@@ -25,21 +24,29 @@ const caseSchema = z.object({
   notas: z.string().optional(),
 });
 
+const ALLOWED_EXTS = ["docx", "pdf", "jpg", "jpeg", "png", "webp"];
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB per file
+const MAX_FILES = 10;
+
+interface QueuedFile {
+  file: File;
+  /** Only set for the first parseable file */
+  parseResult?: ParsedDocument;
+  /** "primary" = used for form pre-fill; "extra" = will just be uploaded */
+  role: "primary" | "extra";
+  error?: string;
+}
+
 interface CaseFormProps {
   initialData?: Case;
-  onSubmit: (data: CaseFormData, file?: File) => Promise<void>;
+  onSubmit: (data: CaseFormData, files?: File[]) => Promise<void>;
   onCancel: () => void;
   isLoading?: boolean;
 }
 
 export function CaseForm({ initialData, onSubmit, onCancel, isLoading }: CaseFormProps) {
-  const [uploadState, setUploadState] = useState<
-    "idle" | "parsing" | "success" | "error"
-  >("idle");
-  const [uploadedFile, setUploadedFile] = useState<string | null>(null);
-  const [fileObject, setFileObject] = useState<File | null>(null);
-  const [parseResult, setParseResult] = useState<ParsedDocument | null>(null);
-  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [queue, setQueue] = useState<QueuedFile[]>([]);
+  const [parseState, setParseState] = useState<"idle" | "parsing">("idle");
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const token = useAuthStore((state) => state.token);
@@ -54,235 +61,233 @@ export function CaseForm({ initialData, onSubmit, onCancel, isLoading }: CaseFor
     resolver: zodResolver(caseSchema),
     defaultValues: {
       nombre_cliente: initialData?.nombre_cliente || "",
-      telefono: initialData?.telefono || "",
-      expediente: initialData?.expediente || "",
-      tipo_caso: initialData?.tipo_caso || "",
-      estado: initialData?.estado || "nuevo",
-      proxima_fecha: initialData?.proxima_fecha || "",
+      telefono:       initialData?.telefono || "",
+      expediente:     initialData?.expediente || "",
+      tipo_caso:      initialData?.tipo_caso || "",
+      estado:         initialData?.estado || "nuevo",
+      proxima_fecha:  initialData?.proxima_fecha || "",
       proxima_accion: initialData?.proxima_accion || "",
       documentos_pendientes: initialData?.documentos_pendientes || "",
-      notas: initialData?.notas || "",
+      notas:          initialData?.notas || "",
     },
   });
 
-  const handleFile = useCallback(async (file: File) => {
-    const ext = file.name.split(".").pop()?.toLowerCase();
-    const allowedExts = ["docx", "pdf", "jpg", "jpeg", "png", "webp"];
+  const fieldLabels: Record<string, string> = {
+    nombre_cliente: "Cliente", telefono: "Teléfono", expediente: "Expediente",
+    tipo_caso: "Tipo", estado: "Estado", notas: "Notas", documentos_pendientes: "Docs",
+  };
 
-    if (!ext || !allowedExts.includes(ext)) {
-      setUploadState("error");
-      setUploadError("Solo se aceptan archivos .docx, .pdf, .jpg, .png y .webp");
-      return;
-    }
+  /** Returns true if this file type can be parsed for form auto-fill */
+  const isParseable = (file: File) => {
+    const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+    return ALLOWED_EXTS.includes(ext);
+  };
 
-    if (file.size > 10 * 1024 * 1024) {
-      setUploadState("error");
-      setUploadError("El archivo no debe superar 10 MB");
-      return;
-    }
+  /** Validate a file and return an error string if invalid, else null */
+  const validateFile = (file: File): string | null => {
+    const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+    if (!ALLOWED_EXTS.includes(ext)) return "Formato no permitido (usa DOCX, PDF, JPG, PNG o WEBP)";
+    if (file.size > MAX_FILE_SIZE) return "El archivo supera 10 MB";
+    return null;
+  };
 
-    setUploadState("parsing");
-    setUploadedFile(file.name);
-    setFileObject(file);
-    setUploadError(null);
+  const hasPrimary = queue.some((q) => q.role === "primary");
 
+  /** Parse a file and pre-fill the form if it's the primary */
+  const parseAndFill = useCallback(async (file: File): Promise<ParsedDocument | undefined> => {
+    const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
     try {
       let result: ParsedDocument;
-
-      const isImage = ["jpg", "jpeg", "png", "webp"].includes(ext);
-
-      if (isImage) {
+      if (["jpg", "jpeg", "png", "webp"].includes(ext)) {
         result = await parseImageFile(file, token || "");
       } else if (ext === "docx") {
-        // Client-side parsing con mammoth.js
         result = await parseDocxFile(file);
       } else {
-        // Server-side parsing via Claude API (PDF, documentos escaneados)
         const response = await documentApi.extract(file, token || undefined);
         result = mapBackendResponse(response);
       }
-
-      setParseResult(result);
-      setUploadState("success");
-
       const currentValues = getValues();
-      reset({
-        ...currentValues,
-        ...result.caseData,
-      });
-    } catch (err) {
-      setUploadState("error");
-      setUploadError(
-        err instanceof Error
-          ? err.message
-          : "No se pudo leer el documento. Verifica que sea un archivo válido."
-      );
+      reset({ ...currentValues, ...result.caseData });
+      return result;
+    } catch {
+      return undefined;
     }
   }, [reset, getValues, token]);
+
+  const addFiles = useCallback(async (incoming: File[]) => {
+    const toAdd = incoming.slice(0, MAX_FILES - queue.length);
+    if (!toAdd.length) return;
+
+    setParseState("parsing");
+
+    const newEntries: QueuedFile[] = [];
+
+    for (const file of toAdd) {
+      const err = validateFile(file);
+      if (err) {
+        newEntries.push({ file, role: "extra", error: err });
+        continue;
+      }
+
+      // First valid parseable file in the whole queue becomes primary
+      if (!hasPrimary && !newEntries.some((e) => e.role === "primary") && isParseable(file)) {
+        const parsed = await parseAndFill(file);
+        newEntries.push({ file, role: "primary", parseResult: parsed });
+      } else {
+        newEntries.push({ file, role: "extra" });
+      }
+    }
+
+    setQueue((prev) => [...prev, ...newEntries]);
+    setParseState("idle");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }, [queue, hasPrimary, parseAndFill]);
+
+  const removeFile = useCallback((idx: number) => {
+    setQueue((prev) => {
+      const next = prev.filter((_, i) => i !== idx);
+      // If we removed the primary, promote the next parseable file
+      if (prev[idx].role === "primary") {
+        const newPrimary = next.findIndex((q) => !q.error && isParseable(q.file));
+        if (newPrimary !== -1) next[newPrimary] = { ...next[newPrimary], role: "primary" };
+      }
+      return next;
+    });
+  }, []);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    const file = e.dataTransfer.files[0];
-    if (file) handleFile(file);
-  }, [handleFile]);
-
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  }, []);
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-  }, []);
-
-  const clearUpload = useCallback(() => {
-    setUploadState("idle");
-    setUploadedFile(null);
-    setFileObject(null);
-    setParseResult(null);
-    setUploadError(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  }, []);
-
-  const fieldLabels: Record<string, string> = {
-    nombre_cliente: "Cliente",
-    telefono: "Teléfono",
-    expediente: "Expediente",
-    tipo_caso: "Tipo de caso",
-    estado: "Estado",
-    notas: "Notas",
-    documentos_pendientes: "Documentos",
-  };
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length) addFiles(files);
+  }, [addFiles]);
 
   const handleFormSubmit = useCallback(async (formData: CaseFormData) => {
-    // Normalizar teléfono: quitar espacios, guiones, +51, 51 inicial
-    let tel = formData.telefono.replace(/[\s\-\(\)]/g, "").replace(/^\+/, "");
-    if (tel.startsWith("51") && tel.length === 11) tel = tel.slice(2);
+    const primaryResult = queue.find((q) => q.role === "primary")?.parseResult;
+    const files = queue.filter((q) => !q.error).map((q) => q.file);
     await onSubmit(
       {
         ...formData,
-        telefono: tel,
-        ...(parseResult?.rawText ? { documento_texto: parseResult.rawText } : {}),
+        telefono: formData.telefono.replace(/[\s\-\(\)]/g, "").replace(/^\+/, "").replace(/^51(\d{9})$/, "$1"),
+        ...(primaryResult?.rawText ? { documento_texto: primaryResult.rawText } : {}),
       },
-      fileObject || undefined,
+      files.length ? files : undefined,
     );
-  }, [onSubmit, parseResult, fileObject]);
+  }, [onSubmit, queue]);
+
+  const canAddMore = queue.length < MAX_FILES;
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-5">
-      {/* Upload de documento (solo para crear, no editar) */}
+      {/* Multi-file upload — only on create */}
       {!initialData && (
         <div className="space-y-2">
           <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
-            Cargar documento del caso
-            <span className="font-normal text-gray-400">(opcional)</span>
+            Documentos del caso
+            <span className="font-normal text-gray-400">(opcional — hasta {MAX_FILES})</span>
             <HintTooltip
-              text="Sube un PDF o DOCX y Minka extraerá automáticamente el nombre del cliente, expediente, tipo de caso y más."
+              text="Sube uno o varios documentos. El primero se usa para auto-rellenar el formulario. Los demás se adjuntan al caso directamente."
               position="right"
             />
           </label>
 
-          {uploadState === "idle" && (
+          {/* Drop zone — shown when queue is empty OR we can still add more */}
+          {(queue.length === 0 || canAddMore) && (
             <div
               role="button"
               tabIndex={0}
-              aria-label="Subir documento del caso. Haz clic o arrastra un archivo .docx, .pdf, .jpg, .png o .webp"
+              aria-label="Subir documentos del caso"
               onDrop={handleDrop}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
+              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+              onDragLeave={(e) => { e.preventDefault(); setIsDragging(false); }}
               onClick={() => fileInputRef.current?.click()}
               onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fileInputRef.current?.click(); } }}
-              className={`
-                border-2 border-dashed rounded-lg p-6 text-center cursor-pointer
-                transition-colors duration-200
-                ${isDragging
-                  ? "border-minka-500 bg-minka-50"
-                  : "border-gray-300 hover:border-minka-400 hover:bg-gray-50"
-                }
+              className={`border-2 border-dashed rounded-lg p-5 text-center cursor-pointer transition-colors duration-200
+                ${isDragging ? "border-minka-500 bg-minka-50" : "border-gray-300 hover:border-minka-400 hover:bg-gray-50"}
+                ${queue.length > 0 ? "py-3" : "p-6"}
               `}
             >
-              <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-              <p className="text-sm text-gray-600">
-                <span className="font-medium text-minka-600">Sube un archivo</span>
-                {" "}o arrastra aquí
-              </p>
-              <p className="text-xs text-gray-400 mt-1">
-                DOCX, PDF, JPG, PNG o WEBP — máx. 10 MB
-              </p>
+              {queue.length === 0 ? (
+                <>
+                  <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                  <p className="text-sm text-gray-600">
+                    <span className="font-medium text-minka-600">Sube uno o más archivos</span>{" "}o arrastra aquí
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">DOCX, PDF, JPG, PNG, WEBP — máx. 10 MB c/u</p>
+                </>
+              ) : (
+                <p className="text-xs text-minka-600 flex items-center justify-center gap-1">
+                  <Plus className="w-3.5 h-3.5" />
+                  Agregar otro documento ({MAX_FILES - queue.length} restante{MAX_FILES - queue.length !== 1 ? "s" : ""})
+                </p>
+              )}
               <input
                 ref={fileInputRef}
                 type="file"
+                multiple
                 accept=".docx,.pdf,.jpg,.jpeg,.png,.webp"
                 className="hidden"
                 onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) handleFile(file);
+                  const files = Array.from(e.target.files ?? []);
+                  if (files.length) addFiles(files);
                 }}
               />
             </div>
           )}
 
-          {uploadState === "parsing" && (
-            <div className="border border-gray-200 rounded-lg p-4 flex items-center gap-3">
-              <div className="w-5 h-5 border-2 border-minka-500/30 border-t-minka-500 rounded-full animate-spin" />
-              <div>
-                <p className="text-sm font-medium text-gray-700">Leyendo documento...</p>
-                <p className="text-xs text-gray-400">{uploadedFile}</p>
-              </div>
+          {/* Parsing spinner */}
+          {parseState === "parsing" && (
+            <div className="flex items-center gap-2 text-xs text-gray-500 px-1">
+              <div className="w-3.5 h-3.5 border-2 border-minka-500/30 border-t-minka-500 rounded-full animate-spin" />
+              Leyendo documento…
             </div>
           )}
 
-          {uploadState === "success" && parseResult && (
-            <div className="border border-green-200 bg-green-50 rounded-lg p-4">
-              <div className="flex items-start justify-between">
-                <div className="flex items-start gap-3">
-                  <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-green-700" />
-                      <p className="text-sm font-medium text-green-800">{uploadedFile}</p>
-                    </div>
-                    <p className="text-xs text-green-600 mt-1">
-                      Campos extraídos: {parseResult.fieldsFound.map(f => fieldLabels[f] || f).join(", ")}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-0.5">
-                      Revisa los datos abajo y ajusta lo que necesites.
-                    </p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={clearUpload}
-                  className="text-gray-400 hover:text-gray-600 p-1"
-                  title="Quitar documento"
+          {/* File list */}
+          {queue.length > 0 && (
+            <ul className="space-y-1.5">
+              {queue.map((entry, idx) => (
+                <li
+                  key={idx}
+                  className={`flex items-center gap-2.5 rounded-lg border px-3 py-2 text-sm
+                    ${entry.error
+                      ? "border-red-200 bg-red-50"
+                      : entry.role === "primary"
+                        ? "border-green-200 bg-green-50"
+                        : "border-gray-200 bg-white"
+                    }`}
                 >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          )}
+                  {entry.error ? (
+                    <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
+                  ) : entry.role === "primary" ? (
+                    <CheckCircle className="w-4 h-4 text-green-600 shrink-0" />
+                  ) : (
+                    <FileText className="w-4 h-4 text-gray-400 shrink-0" />
+                  )}
 
-          {uploadState === "error" && (
-            <div className="border border-red-200 bg-red-50 rounded-lg p-4">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
-                  <div>
-                    <p className="text-sm font-medium text-red-800">Error al procesar</p>
-                    <p className="text-xs text-red-600 mt-0.5">{uploadError}</p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={clearUpload}
-                  className="text-gray-400 hover:text-gray-600 p-1"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
+                  <span className="flex-1 min-w-0 truncate text-gray-700">{entry.file.name}</span>
+
+                  {entry.role === "primary" && entry.parseResult && !entry.error && (
+                    <span className="text-[10px] text-green-600 bg-green-100 rounded px-1.5 py-0.5 shrink-0">
+                      {entry.parseResult.fieldsFound.map((f) => fieldLabels[f] || f).join(" · ")}
+                    </span>
+                  )}
+
+                  {entry.error && (
+                    <span className="text-[10px] text-red-600 shrink-0">{entry.error}</span>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => removeFile(idx)}
+                    className="text-gray-400 hover:text-gray-600 shrink-0"
+                    title="Quitar archivo"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </li>
+              ))}
+            </ul>
           )}
         </div>
       )}
@@ -438,7 +443,7 @@ export function CaseForm({ initialData, onSubmit, onCancel, isLoading }: CaseFor
         </button>
         <button
           type="submit"
-          disabled={isLoading}
+          disabled={isLoading || parseState === "parsing"}
           className="px-5 py-2 bg-minka-500 text-white rounded-lg hover:bg-minka-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading ? (
@@ -446,9 +451,7 @@ export function CaseForm({ initialData, onSubmit, onCancel, isLoading }: CaseFor
               <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               Guardando...
             </span>
-          ) : (
-            "Guardar"
-          )}
+          ) : "Guardar"}
         </button>
       </div>
     </form>

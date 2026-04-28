@@ -7,6 +7,21 @@ import { useCases } from "@/hooks/use-cases";
 import { extractClients } from "@/lib/client-utils";
 import { CASE_TYPE_LABELS, STATUS_COLORS, STATUS_LABELS } from "@/types";
 import type { ClientSummary } from "@/lib/client-utils";
+import { OnboardingTour } from "@/components/onboarding-tour";
+
+const CLIENTES_TOUR_STEPS = [
+  {
+    title: "Directorio de clientes",
+    body: "Los clientes se generan automáticamente desde los datos de tus casos — no necesitas crearlos manualmente.",
+    placement: "center" as const,
+  },
+  {
+    target: "clientes-buscar",
+    title: "Busca clientes",
+    body: "Filtra por nombre o teléfono. Haz clic en un cliente para ver todos sus casos activos.",
+    placement: "bottom" as const,
+  },
+];
 
 export default function ClientesPage() {
   const { data: cases = [], isLoading } = useCases();
@@ -63,7 +78,7 @@ export default function ClientesPage() {
       </div>
 
       {/* Search */}
-      <div className="relative mb-6">
+      <div data-tour="clientes-buscar" className="relative mb-6">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
         <input
           type="text"
@@ -89,6 +104,8 @@ export default function ClientesPage() {
           ))}
         </div>
       )}
+
+      <OnboardingTour steps={CLIENTES_TOUR_STEPS} storageKey="minka_tour_clientes" />
     </div>
   );
 }

@@ -5,6 +5,22 @@ import { Calculator, Calendar, Clock, AlertCircle, ChevronDown, ChevronUp, Chevr
 import { calculadoraApi } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
 import type { CalcPlazoResponse, Feriado } from "@/types";
+import { OnboardingTour } from "@/components/onboarding-tour";
+
+const CALC_TOUR_STEPS = [
+  {
+    target: "calc-form",
+    title: "Calculadora de plazos",
+    body: "Ingresa la fecha de inicio, el número de días y el tipo de plazo. La calculadora descuenta fines de semana y feriados peruanos automáticamente.",
+    placement: "bottom" as const,
+  },
+  {
+    target: "calc-presets",
+    title: "Plazos comunes",
+    body: "Un clic aplica los plazos más usados en procesos peruanos: 3, 5, 10, 15 o 30 días hábiles, entre otros.",
+    placement: "left" as const,
+  },
+];
 
 type TipoCalculo = "habiles" | "calendario";
 
@@ -114,7 +130,7 @@ export default function CalculadoraPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Formulario */}
         <div className="lg:col-span-2 space-y-5">
-          <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-5">
+          <div data-tour="calc-form" className="bg-white rounded-xl border border-gray-200 p-6 space-y-5">
             {/* Fecha de inicio */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -249,7 +265,7 @@ export default function CalculadoraPage() {
         {/* Panel lateral */}
         <div className="space-y-5">
           {/* Plazos comunes */}
-          <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <div data-tour="calc-presets" className="bg-white rounded-xl border border-gray-200 p-5">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">Plazos comunes</h3>
             <div className="space-y-1.5">
               {PLAZOS_COMUNES.map((p) => (
@@ -316,6 +332,8 @@ export default function CalculadoraPage() {
           </div>
         </div>
       </div>
+
+      <OnboardingTour steps={CALC_TOUR_STEPS} storageKey="minka_tour_calculadora" />
     </div>
   );
 }

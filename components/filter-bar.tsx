@@ -71,6 +71,7 @@ export function FilterBar({ filters, onChange, onClearAll, onNewCase }: FilterBa
         {/* New case button */}
         <button
           onClick={onNewCase}
+          data-tour="casos-nuevo"
           className="flex items-center justify-center gap-2 px-5 py-2.5 bg-minka-500 text-white rounded-lg hover:bg-minka-600 transition-colors font-medium whitespace-nowrap"
         >
           <span className="text-lg leading-none">+</span>

@@ -30,6 +30,27 @@ import {
   ArrowUpDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { OnboardingTour } from "@/components/onboarding-tour";
+
+const CASOS_TOUR_STEPS = [
+  {
+    title: "Gestiona tus casos",
+    body: "Aquí están todos tus expedientes. Puedes crearlos, editarlos, filtrarlos y ordenarlos por cualquier columna.",
+    placement: "center" as const,
+  },
+  {
+    target: "casos-nuevo",
+    title: "Crear un nuevo caso",
+    body: "Sube el documento del expediente (.docx o PDF) y la IA pre-llenará los campos automáticamente.",
+    placement: "bottom" as const,
+  },
+  {
+    target: "casos-tabla",
+    title: "Detalle del caso",
+    body: "Haz clic en cualquier fila para ver el expediente completo, documentos subidos y el Agente Legal IA.",
+    placement: "top" as const,
+  },
+];
 
 export default function CasosPage() {
   return (
@@ -91,20 +112,27 @@ function CasosContent() {
   };
 
   // Handle form submit
-  const handleSubmit = async (data: CaseFormData, file?: File) => {
+  const handleSubmit = async (data: CaseFormData, files?: File[]) => {
     try {
       if (editingCase) {
         await updateCase.mutateAsync({ id: editingCase.id, data });
         toast({ title: "Caso actualizado", description: "Los cambios se guardaron correctamente." });
       } else {
         const newCase = await createCase.mutateAsync(data);
-        if (file && newCase?.id) {
-          try {
-            await casesApi.uploadDocument(newCase.id, file, token || undefined);
-            toast({ title: "Caso creado", description: "El caso y el documento se guardaron correctamente." });
-          } catch {
-            toast({ title: "Caso creado", description: "El caso se creó, pero no se pudo subir el documento.", variant: "default" });
+        if (files?.length && newCase?.id) {
+          let uploaded = 0;
+          for (const f of files) {
+            try {
+              await casesApi.uploadDocument(newCase.id, f, token || undefined);
+              uploaded++;
+            } catch {
+              // continue uploading remaining files even if one fails
+            }
           }
+          const msg = uploaded === files.length
+            ? `Caso creado con ${uploaded} documento${uploaded !== 1 ? "s" : ""}.`
+            : `Caso creado. ${uploaded}/${files.length} documentos subidos.`;
+          toast({ title: "Caso creado", description: msg });
         } else {
           toast({ title: "Caso creado", description: "El nuevo caso se registró correctamente." });
         }
@@ -209,7 +237,7 @@ function CasosContent() {
       </div>
 
       {/* Desktop table view */}
-      <div className="hidden lg:block bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div data-tour="casos-tabla" className="hidden lg:block bg-white rounded-xl border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -394,6 +422,8 @@ function CasosContent() {
           </div>
         </div>
       )}
+
+      <OnboardingTour steps={CASOS_TOUR_STEPS} storageKey="minka_tour_casos" />
     </div>
   );
 }
