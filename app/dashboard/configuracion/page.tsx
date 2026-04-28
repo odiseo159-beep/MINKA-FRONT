@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Settings, User, Bell, Building2, Save, Check } from "lucide-react";
+import { Settings, User, Bell, Building2, Save, Check, MessageCircle, Copy, AlertCircle, CheckCircle2, Trash2, Eye, EyeOff } from "lucide-react";
 import { useAuthStore } from "@/lib/auth-store";
-import { abogadosApi, estudiosApi } from "@/lib/api";
+import { abogadosApi, estudiosApi, type WhapiSaveResponse } from "@/lib/api";
 
 export default function ConfiguracionPage() {
   const user = useAuthStore((s) => s.user);
@@ -21,6 +21,16 @@ export default function ConfiguracionPage() {
     telefono: "",
     colegiatura: "",
   });
+
+  // ─── Whapi (WhatsApp) integration state ───
+  const [whapiToken, setWhapiToken] = useState("");
+  const [whapiTokenVisible, setWhapiTokenVisible] = useState(false);
+  const [whapiSavedInfo, setWhapiSavedInfo] = useState<WhapiSaveResponse | null>(null);
+  const [whapiSavedNumber, setWhapiSavedNumber] = useState("");
+  const [whapiSavedChannelId, setWhapiSavedChannelId] = useState("");
+  const [whapiState, setWhapiState] = useState<"idle" | "verifying" | "saving" | "error">("idle");
+  const [whapiError, setWhapiError] = useState("");
+  const [webhookCopied, setWebhookCopied] = useState(false);
 
   const [estudio, setEstudio] = useState({
     nombre: "SimplifAI Legal",
@@ -70,6 +80,11 @@ export default function ConfiguracionPage() {
             telefono: a.telefono || "",
             colegiatura: a.colegiatura || "",
           });
+          // Hydrate Whapi state from saved abogado
+          if (a.whapi_channel_id) {
+            setWhapiSavedChannelId(a.whapi_channel_id);
+            setWhapiSavedNumber(a.whatsapp_numero || "");
+          }
         }
         if (estudios.length > 0) {
           const e = estudios[0];
@@ -116,6 +131,54 @@ export default function ConfiguracionPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  // ─── Whapi handlers ───
+  const handleConnectWhapi = async () => {
+    if (!abogadoId) {
+      setWhapiError("Primero guarda tu perfil para crear el registro de abogado.");
+      setWhapiState("error");
+      return;
+    }
+    if (!whapiToken.trim()) {
+      setWhapiError("Pega el token del canal Whapi.");
+      setWhapiState("error");
+      return;
+    }
+    setWhapiState("saving");
+    setWhapiError("");
+    try {
+      const res = await abogadosApi.saveWhapi(abogadoId, whapiToken.trim(), undefined, token || undefined);
+      setWhapiSavedInfo(res);
+      setWhapiSavedChannelId(res.channel_info.channel_id);
+      setWhapiSavedNumber(res.channel_info.phone || "");
+      setWhapiToken("");
+      setWhapiState("idle");
+    } catch (err) {
+      setWhapiError(err instanceof Error ? err.message : "No se pudo conectar el canal");
+      setWhapiState("error");
+    }
+  };
+
+  const handleDisconnectWhapi = async () => {
+    if (!abogadoId) return;
+    if (!confirm("¿Desconectar el canal Whapi? El bot dejará de responder mensajes.")) return;
+    try {
+      await abogadosApi.disconnectWhapi(abogadoId, token || undefined);
+      setWhapiSavedInfo(null);
+      setWhapiSavedChannelId("");
+      setWhapiSavedNumber("");
+    } catch (err) {
+      setWhapiError(err instanceof Error ? err.message : "Error al desconectar");
+      setWhapiState("error");
+    }
+  };
+
+  const copyWebhookUrl = () => {
+    if (!whapiSavedInfo?.webhook_url) return;
+    navigator.clipboard.writeText(whapiSavedInfo.webhook_url);
+    setWebhookCopied(true);
+    setTimeout(() => setWebhookCopied(false), 2000);
   };
 
   if (isLoading) {
@@ -238,6 +301,123 @@ export default function ConfiguracionPage() {
                 </span>
               </div>
             </div>
+          </div>
+        </section>
+
+        {/* Integración WhatsApp (Whapi) */}
+        <section className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
+            <MessageCircle className="w-4 h-4 text-gray-500" />
+            <h2 className="font-semibold text-gray-900">Integración WhatsApp</h2>
+            {whapiSavedChannelId && (
+              <span className="ml-auto inline-flex items-center gap-1 text-xs text-green-700 bg-green-50 border border-green-200 rounded-full px-2 py-0.5">
+                <CheckCircle2 className="w-3 h-3" />
+                Conectado
+              </span>
+            )}
+          </div>
+
+          <div className="p-5 space-y-4">
+            {whapiSavedChannelId ? (
+              // ── Estado conectado ──
+              <>
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm space-y-1.5">
+                  <div className="flex justify-between gap-3">
+                    <span className="text-gray-500">Canal:</span>
+                    <span className="font-mono text-gray-800">{whapiSavedChannelId}</span>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <span className="text-gray-500">Número WhatsApp:</span>
+                    <span className="font-mono text-gray-800">{whapiSavedNumber || "—"}</span>
+                  </div>
+                </div>
+
+                {whapiSavedInfo?.webhook_url && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 space-y-2">
+                    <p className="text-xs font-medium text-blue-900">URL de webhook (copia esto a Whapi):</p>
+                    <div className="flex items-center gap-2 bg-white border border-blue-200 rounded px-2 py-1.5">
+                      <code className="text-xs text-gray-700 flex-1 truncate">{whapiSavedInfo.webhook_url}</code>
+                      <button
+                        onClick={copyWebhookUrl}
+                        className="text-blue-600 hover:text-blue-800 shrink-0"
+                        title="Copiar"
+                      >
+                        {webhookCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+                    <p className="text-xs text-blue-700">
+                      En whapi.cloud → tu canal → Settings → Webhooks → pega esta URL en "Endpoint" y activa el evento <code className="bg-blue-100 px-1 rounded">messages.post</code>.
+                    </p>
+                  </div>
+                )}
+
+                <button
+                  onClick={handleDisconnectWhapi}
+                  className="inline-flex items-center gap-1.5 text-sm text-red-600 hover:text-red-800"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Desconectar canal
+                </button>
+              </>
+            ) : (
+              // ── Estado sin conectar ──
+              <>
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-900">
+                  <p className="font-medium mb-1.5 flex items-center gap-1.5">
+                    <AlertCircle className="w-4 h-4" />
+                    Aún no has conectado tu canal de WhatsApp
+                  </p>
+                  <ol className="text-xs space-y-1 pl-5 list-decimal text-amber-800">
+                    <li>Crea o accede a tu canal en <a href="https://whapi.cloud" target="_blank" rel="noopener noreferrer" className="underline font-medium">whapi.cloud</a> y escanea el QR con tu WhatsApp.</li>
+                    <li>En el dashboard de Whapi copia el <span className="font-medium">API token</span> de tu canal.</li>
+                    <li>Pega el token aquí abajo y haz clic en "Conectar canal".</li>
+                    <li>Después se te mostrará la URL de webhook que debes pegar en la configuración del canal en Whapi.</li>
+                  </ol>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Token API de Whapi
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={whapiTokenVisible ? "text" : "password"}
+                      value={whapiToken}
+                      onChange={(e) => { setWhapiToken(e.target.value); setWhapiError(""); }}
+                      placeholder="Pega aquí tu token (ej: aBcDeFgHiJkLmN...)"
+                      className="w-full px-3 py-2 pr-10 border border-gray-200 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-minka-500/20 focus:border-minka-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setWhapiTokenVisible(!whapiTokenVisible)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      title={whapiTokenVisible ? "Ocultar" : "Mostrar"}
+                    >
+                      {whapiTokenVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  {whapiError && (
+                    <p className="mt-1.5 text-xs text-red-600 flex items-center gap-1">
+                      <AlertCircle className="w-3.5 h-3.5" />
+                      {whapiError}
+                    </p>
+                  )}
+                </div>
+
+                <button
+                  onClick={handleConnectWhapi}
+                  disabled={whapiState === "saving" || !whapiToken.trim() || !abogadoId}
+                  className="px-4 py-2 bg-minka-500 text-white rounded-lg hover:bg-minka-600 transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {whapiState === "saving" ? (
+                    <span className="flex items-center gap-2">
+                      <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Verificando…
+                    </span>
+                  ) : "Conectar canal"}
+                </button>
+              </>
+            )}
           </div>
         </section>
 

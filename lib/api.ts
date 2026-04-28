@@ -191,12 +191,44 @@ export const casesApi = {
 // ============================================
 // ABOGADOS API
 // ============================================
+export interface WhapiVerifyResponse {
+  channel_id: string;
+  phone: string;
+  name: string;
+  status: string;
+}
+
+export interface WhapiSaveResponse {
+  ok: boolean;
+  abogado: Record<string, any>;
+  channel_info: WhapiVerifyResponse;
+  webhook_url: string;
+  instrucciones: string;
+}
+
 export const abogadosApi = {
   getAll: async (token?: string) => fetchAPI<any[]>("/api/abogados", { token }),
   create: async (data: Record<string, any>, token?: string) =>
     fetchAPI<any>("/api/abogados", { method: "POST", token, body: JSON.stringify(data) }),
   update: async (id: number, data: Record<string, any>, token?: string) =>
     fetchAPI<any>(`/api/abogados/${id}`, { method: "PUT", token, body: JSON.stringify(data) }),
+
+  verifyWhapi: async (id: number, whapiToken: string, token?: string) =>
+    fetchAPI<WhapiVerifyResponse>(`/api/abogados/${id}/whapi/verificar`, {
+      method: "POST",
+      token,
+      body: JSON.stringify({ whapi_token: whapiToken }),
+    }),
+
+  saveWhapi: async (id: number, whapiToken: string, whatsappNumero?: string, token?: string) =>
+    fetchAPI<WhapiSaveResponse>(`/api/abogados/${id}/whapi`, {
+      method: "POST",
+      token,
+      body: JSON.stringify({ whapi_token: whapiToken, whatsapp_numero: whatsappNumero }),
+    }),
+
+  disconnectWhapi: async (id: number, token?: string) =>
+    fetchAPI<{ ok: boolean }>(`/api/abogados/${id}/whapi`, { method: "DELETE", token }),
 };
 
 // ============================================
