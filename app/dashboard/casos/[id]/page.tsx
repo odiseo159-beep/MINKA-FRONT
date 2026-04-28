@@ -27,6 +27,7 @@ import { CasoChatPanel } from "@/components/caso-chat-panel";
 import { DocumentosPanel } from "@/components/documentos-panel";
 import { LegalAgentPanel } from "@/components/legal-agent-panel";
 import { CaseForm } from "@/components/case-form";
+import { DateInputPE } from "@/components/date-input-pe";
 import { useDocumentosCaso } from "@/hooks/use-documentos";
 import type { CaseFormData } from "@/types";
 
@@ -238,14 +239,12 @@ export default function CaseDetailPage() {
               </div>
               <div className="flex items-center gap-2">
                 <label htmlFor="fecha-quick" className="text-xs text-gray-500">Próxima fecha:</label>
-                <input
+                <DateInputPE
                   id="fecha-quick"
-                  type="date"
-                  lang="es-PE"
                   value={caso.proxima_fecha || ""}
-                  onChange={(e) => handleProximaFechaChange(e.target.value)}
+                  onChange={handleProximaFechaChange}
                   disabled={updateCase.isPending}
-                  className={`px-2 py-1 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-minka-500 focus:border-minka-500 outline-none disabled:opacity-50 ${getDateUrgencyClass(caso.proxima_fecha)}`}
+                  className={`w-32 px-2 py-1 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-minka-500 focus:border-minka-500 outline-none disabled:opacity-50 ${getDateUrgencyClass(caso.proxima_fecha)}`}
                 />
               </div>
             </div>

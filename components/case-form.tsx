@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Upload, FileText, CheckCircle, AlertCircle, X, Plus } from "lucide-react";
@@ -11,6 +11,7 @@ import { parseDocxFile, mapBackendResponse, parseImageFile, type ParsedDocument 
 import { documentApi } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
 import { HintTooltip } from "@/components/hint-tooltip";
+import { DateInputPE } from "@/components/date-input-pe";
 
 const caseSchema = z.object({
   nombre_cliente: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
@@ -56,6 +57,7 @@ export function CaseForm({ initialData, onSubmit, onCancel, isLoading }: CaseFor
     handleSubmit,
     reset,
     getValues,
+    control,
     formState: { errors },
   } = useForm<CaseFormData>({
     resolver: zodResolver(caseSchema),
@@ -408,12 +410,17 @@ export function CaseForm({ initialData, onSubmit, onCancel, isLoading }: CaseFor
           <label htmlFor="proxima_fecha" className="block text-sm font-medium text-gray-700 mb-1.5">
             Próxima fecha
           </label>
-          <input
-            id="proxima_fecha"
-            {...register("proxima_fecha")}
-            type="date"
-            lang="es-PE"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-minka-500 focus:border-minka-500 outline-none"
+          <Controller
+            name="proxima_fecha"
+            control={control}
+            render={({ field }) => (
+              <DateInputPE
+                id="proxima_fecha"
+                value={field.value || ""}
+                onChange={field.onChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-minka-500 focus:border-minka-500 outline-none"
+              />
+            )}
           />
         </div>
       </div>

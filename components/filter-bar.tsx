@@ -3,6 +3,7 @@
 import { Search, Filter, X, Calendar } from "lucide-react";
 import { STATUS_LABELS, CASE_TYPE_LABELS } from "@/types";
 import type { CaseFilters } from "@/types";
+import { DateInputPE } from "@/components/date-input-pe";
 
 interface FilterBarProps {
   filters: CaseFilters;
@@ -86,22 +87,18 @@ export function FilterBar({ filters, onChange, onClearAll, onNewCase }: FilterBa
           <span>Próxima fecha:</span>
         </div>
         <div className="flex items-center gap-2">
-          <input
-            type="date"
-            lang="es-PE"
+          <DateInputPE
             value={filters.dateFrom}
-            onChange={(e) => update({ dateFrom: e.target.value })}
+            onChange={(iso) => update({ dateFrom: iso })}
             aria-label="Fecha desde"
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-minka-500 focus:border-minka-500 outline-none"
+            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-minka-500 focus:border-minka-500 outline-none w-32"
           />
           <span className="text-gray-400 text-sm" aria-hidden="true">—</span>
-          <input
-            type="date"
-            lang="es-PE"
+          <DateInputPE
             value={filters.dateTo}
-            onChange={(e) => update({ dateTo: e.target.value })}
+            onChange={(iso) => update({ dateTo: iso })}
             aria-label="Fecha hasta"
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-minka-500 focus:border-minka-500 outline-none"
+            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-minka-500 focus:border-minka-500 outline-none w-32"
           />
         </div>
       </div>

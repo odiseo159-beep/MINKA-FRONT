@@ -6,6 +6,7 @@ import { calculadoraApi } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
 import type { CalcPlazoResponse, Feriado } from "@/types";
 import { OnboardingTour } from "@/components/onboarding-tour";
+import { DateInputPE } from "@/components/date-input-pe";
 
 const CALC_TOUR_STEPS = [
   {
@@ -136,11 +137,9 @@ export default function CalculadoraPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Fecha de inicio
               </label>
-              <input
-                type="date"
-                lang="es-PE"
+              <DateInputPE
                 value={fechaInicio}
-                onChange={(e) => { setFechaInicio(e.target.value); setResultado(null); }}
+                onChange={(iso) => { setFechaInicio(iso); setResultado(null); }}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-minka-500 focus:border-transparent"
               />
             </div>
