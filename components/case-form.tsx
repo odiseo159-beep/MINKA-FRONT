@@ -167,22 +167,29 @@ export function CaseForm({ initialData, onSubmit, onCancel, isLoading }: CaseFor
   // creería que el caso quedó con sus archivos adjuntos.
   const allFilesFailed = queue.length > 0 && queue.every((q) => q.error);
 
+  // Lock anti doble-submit: evita que un segundo click rápido cree un caso duplicado.
+  // isLoading viene del padre y puede tardar un tick en propagarse — el ref es síncrono.
+  const isSubmittingRef = useRef(false);
+
   const handleFormSubmit = useCallback(async (formData: CaseFormData) => {
-    if (allFilesFailed) {
-      // No debería pasar (el botón está disabled) — pero defensa en profundidad
-      return;
+    if (allFilesFailed) return;
+    if (isSubmittingRef.current) return;  // ya hay un submit en vuelo
+    isSubmittingRef.current = true;
+    try {
+      const primaryEntry = queue.find((q) => q.role === "primary");
+      const files = queue.filter((q) => !q.error).map((q) => q.file);
+      await onSubmit(
+        {
+          ...formData,
+          telefono: formData.telefono.replace(/[\s\-\(\)]/g, "").replace(/^\+/, "").replace(/^51(\d{9})$/, "$1"),
+          ...(primaryEntry?.parseResult?.rawText ? { documento_texto: primaryEntry.parseResult.rawText } : {}),
+        },
+        files.length ? files : undefined,
+        primaryEntry?.parseResult?.caseData,
+      );
+    } finally {
+      isSubmittingRef.current = false;
     }
-    const primaryEntry = queue.find((q) => q.role === "primary");
-    const files = queue.filter((q) => !q.error).map((q) => q.file);
-    await onSubmit(
-      {
-        ...formData,
-        telefono: formData.telefono.replace(/[\s\-\(\)]/g, "").replace(/^\+/, "").replace(/^51(\d{9})$/, "$1"),
-        ...(primaryEntry?.parseResult?.rawText ? { documento_texto: primaryEntry.parseResult.rawText } : {}),
-      },
-      files.length ? files : undefined,
-      primaryEntry?.parseResult?.caseData,
-    );
   }, [onSubmit, queue, allFilesFailed]);
 
   const canAddMore = queue.length < MAX_FILES;

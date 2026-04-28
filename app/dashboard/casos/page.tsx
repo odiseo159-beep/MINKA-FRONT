@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useCases, useCreateCase, useUpdateCase, useNotifyClient, filterCases } from "@/hooks/use-cases";
-import { casesApi } from "@/lib/api";
+import { casesApi, caseDocumentosApi } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
 import { useDebounce } from "@/hooks/use-debounce";
 import { TableRowSkeleton } from "@/components/skeletons";
@@ -82,8 +82,17 @@ function CasosContent() {
   useEffect(() => {
     if (searchParams.get("new") === "true") {
       setIsModalOpen(true);
+      return;
     }
-  }, [searchParams]);
+    const editId = searchParams.get("edit");
+    if (editId && cases) {
+      const found = cases.find((c) => c.id === Number(editId));
+      if (found) {
+        setEditingCase(found);
+        setIsModalOpen(true);
+      }
+    }
+  }, [searchParams, cases]);
 
   // Focus management for modal
   useEffect(() => {
@@ -126,7 +135,7 @@ function CasosContent() {
           let uploaded = 0;
           for (const f of files) {
             try {
-              await casesApi.uploadDocument(newCase.id, f, token || undefined);
+              await caseDocumentosApi.upload(newCase.id, f, token || undefined);
               uploaded++;
             } catch {
               // continue uploading remaining files even if one fails
