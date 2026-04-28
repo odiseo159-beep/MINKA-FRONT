@@ -30,6 +30,18 @@ import { CaseForm } from "@/components/case-form";
 import { useDocumentosCaso } from "@/hooks/use-documentos";
 import type { CaseFormData } from "@/types";
 
+// Inserta saltos de línea antes de marcadores numerados "N.- " que el parser
+// del .docx pegó en un solo párrafo (ej. "...partes2.- Voucher..." → bullets).
+// Dos regex específicas para evitar partir años: "20244.- " → "2024\n4.- ", no "20\n44.- ".
+function formatDocumentosPendientes(text: string): string {
+  return text
+    .replace(/(\d{4})(\d{1,2}\.-\s)/g, "$1\n$2")
+    .replace(/([a-zA-ZÁÉÍÓÚÑáéíóúñ])(\d{1,2}\.-\s)/g, "$1\n$2")
+    .replace(/^\n+/, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 export default function CaseDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -247,18 +259,36 @@ export default function CaseDetailPage() {
       </div>
 
       {/* AI Synthesis panel */}
-      <div className="bg-gray-50 rounded-xl border border-gray-200 p-5 mb-6">
-        <div className="flex items-center gap-2 mb-2">
-          <Sparkles className="w-4 h-4 text-minka-500" aria-hidden="true" />
-          <p className="eyebrow" style={{ color: "hsl(var(--ring))" }}>Síntesis del caso · Minka</p>
+      <div className="bg-gradient-to-br from-minka-50 to-white rounded-xl border-2 border-minka-100 p-6 mb-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Sparkles className="w-5 h-5 text-minka-500" aria-hidden="true" />
+          <p className="text-sm font-semibold uppercase tracking-wider text-minka-600">Síntesis del caso · Minka</p>
         </div>
-        <p className="text-sm text-gray-700 leading-relaxed">
-          {CASE_TYPE_LABELS[caso.tipo_caso] || caso.tipo_caso} a favor de <strong>{caso.nombre_cliente}</strong>.{" "}
-          Estado actual: <strong>{STATUS_LABELS[caso.estado]}</strong>.{" "}
-          {caso.proxima_accion && <>Próxima acción: {caso.proxima_accion}{caso.proxima_fecha ? ` (${formatDate(caso.proxima_fecha)})` : ""}. </>}
-          {caso.notas && <>{caso.notas.slice(0, 140)}{caso.notas.length > 140 ? "…" : ""}</>}
-          {!caso.proxima_accion && !caso.notas && "Sin notas adicionales registradas."}
-        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
+          <div>
+            <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">Materia</p>
+            <p className="text-base text-gray-900 font-medium">
+              {CASE_TYPE_LABELS[caso.tipo_caso] || caso.tipo_caso}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">Próxima acción</p>
+            <p className="text-base text-gray-900 font-medium">
+              {caso.proxima_accion ? (
+                <>
+                  {caso.proxima_accion}
+                  {caso.proxima_fecha && (
+                    <span className={`ml-2 text-sm ${getDateUrgencyClass(caso.proxima_fecha)}`}>
+                      · {formatDate(caso.proxima_fecha)}
+                    </span>
+                  )}
+                </>
+              ) : (
+                <span className="text-gray-400 italic font-normal">Sin próxima acción definida</span>
+              )}
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Content */}
@@ -349,20 +379,8 @@ export default function CaseDetailPage() {
                 <FileText className="w-5 h-5 text-amber-500" aria-hidden="true" />
                 <h2 className="text-lg font-semibold text-gray-900">Documentos pendientes</h2>
               </div>
-              <p className="text-gray-600 whitespace-pre-wrap">{caso.documentos_pendientes}</p>
-            </div>
-          )}
-
-          {/* Internal notes */}
-          {caso.notas && (
-            <div className="bg-amber-50 rounded-xl border border-amber-200 p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Lock className="w-5 h-5 text-amber-600" aria-hidden="true" />
-                <h2 className="text-lg font-semibold text-amber-900">Notas internas</h2>
-              </div>
-              <p className="text-amber-800 whitespace-pre-wrap">{caso.notas.replace(/\n{3,}/g, "\n\n").trim()}</p>
-              <p className="text-xs text-amber-600 mt-4">
-                Estas notas no se comparten con el cliente
+              <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
+                {formatDocumentosPendientes(caso.documentos_pendientes)}
               </p>
             </div>
           )}
@@ -436,6 +454,22 @@ export default function CaseDetailPage() {
               </div>
             </div>
           </div>
+
+          {/* Internal notes — sidebar */}
+          {caso.notas && (
+            <div className="bg-amber-50 rounded-xl border border-amber-200 p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <Lock className="w-4 h-4 text-amber-600" aria-hidden="true" />
+                <h2 className="text-base font-semibold text-amber-900">Notas internas</h2>
+              </div>
+              <p className="text-sm text-amber-800 whitespace-pre-wrap leading-relaxed">
+                {caso.notas.replace(/\n{3,}/g, "\n\n").trim()}
+              </p>
+              <p className="text-[10px] text-amber-600 mt-3 uppercase tracking-wide">
+                No se comparten con el cliente
+              </p>
+            </div>
+          )}
 
           {/* AI Quick Actions */}
           <div className="bg-white rounded-xl border border-gray-200 p-6">
