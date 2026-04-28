@@ -12,8 +12,10 @@ import {
   Settings,
   MessageCircle,
   Calculator,
+  Brain,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/lib/auth-store";
 
 const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Inicio" },
@@ -26,11 +28,18 @@ const navItems = [
   { href: "/dashboard/configuracion", icon: Settings, label: "Configuración" },
 ];
 
+const adminItems = [
+  { href: "/dashboard/aprendizaje", icon: Brain, label: "Aprendizaje IA" },
+];
+
 interface SidebarProps {
   currentPath: string;
 }
 
 export function Sidebar({ currentPath }: SidebarProps) {
+  const user = useAuthStore((s) => s.user);
+  const isAdmin = user?.rol === "admin";
+
   // Check if a path is active (exact match or starts with for nested routes)
   const isActive = (href: string) => {
     if (href === "/dashboard") {
@@ -75,6 +84,31 @@ export function Sidebar({ currentPath }: SidebarProps) {
             </li>
           ))}
         </ul>
+
+        {isAdmin && (
+          <>
+            <p className="mt-6 mb-2 px-4 text-[10px] uppercase tracking-wider text-gray-400 font-semibold">Admin</p>
+            <ul className="space-y-1">
+              {adminItems.map((item) => (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    aria-current={isActive(item.href) ? "page" : undefined}
+                    className={cn(
+                      "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors",
+                      isActive(item.href)
+                        ? "bg-purple-50 text-purple-700 font-semibold"
+                        : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+                    )}
+                  >
+                    <item.icon className="w-5 h-5" aria-hidden="true" />
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
       </nav>
 
       {/* Bot status */}

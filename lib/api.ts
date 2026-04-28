@@ -301,6 +301,47 @@ export const normativaApi = {
 };
 
 // ============================================
+// CORRECCIONES (Aprendizaje IA — solo admin)
+// ============================================
+export interface Correction {
+  id: number;
+  caso_id: number;
+  abogado_id: number | null;
+  campo: string;
+  valor_claude: string | null;
+  valor_abogado: string | null;
+  tipo_caso: string | null;
+  created_at: string;
+  nombre_cliente?: string | null;
+  expediente?: string | null;
+}
+
+export interface CorrectionStat {
+  campo: string;
+  tipo_caso: string | null;
+  total: number;
+  adiciones: number;
+  correcciones: number;
+}
+
+export const correctionsApi = {
+  list: async (
+    params: { campo?: string; tipo_caso?: string; limit?: number },
+    token?: string,
+  ): Promise<Correction[]> => {
+    const qs = new URLSearchParams();
+    if (params.campo) qs.append("campo", params.campo);
+    if (params.tipo_caso) qs.append("tipo_caso", params.tipo_caso);
+    if (params.limit) qs.append("limit", String(params.limit));
+    return fetchAPI<Correction[]>(`/api/corrections?${qs.toString()}`, { token });
+  },
+
+  stats: async (token?: string): Promise<CorrectionStat[]> => {
+    return fetchAPI<CorrectionStat[]>("/api/corrections/stats", { token });
+  },
+};
+
+// ============================================
 // CASO CHAT API
 // ============================================
 export interface CasoChatResponse {
