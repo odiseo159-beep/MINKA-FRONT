@@ -162,7 +162,16 @@ export function CaseForm({ initialData, onSubmit, onCancel, isLoading }: CaseFor
     if (files.length) addFiles(files);
   }, [addFiles]);
 
+  // Detecta el caso degenerado: el usuario subió archivos pero TODOS fallaron validación.
+  // Sin esto, el formulario se enviaría silenciosamente sin documentos y el abogado
+  // creería que el caso quedó con sus archivos adjuntos.
+  const allFilesFailed = queue.length > 0 && queue.every((q) => q.error);
+
   const handleFormSubmit = useCallback(async (formData: CaseFormData) => {
+    if (allFilesFailed) {
+      // No debería pasar (el botón está disabled) — pero defensa en profundidad
+      return;
+    }
     const primaryEntry = queue.find((q) => q.role === "primary");
     const files = queue.filter((q) => !q.error).map((q) => q.file);
     await onSubmit(
@@ -174,7 +183,7 @@ export function CaseForm({ initialData, onSubmit, onCancel, isLoading }: CaseFor
       files.length ? files : undefined,
       primaryEntry?.parseResult?.caseData,
     );
-  }, [onSubmit, queue]);
+  }, [onSubmit, queue, allFilesFailed]);
 
   const canAddMore = queue.length < MAX_FILES;
 
@@ -289,6 +298,17 @@ export function CaseForm({ initialData, onSubmit, onCancel, isLoading }: CaseFor
                 </li>
               ))}
             </ul>
+          )}
+
+          {/* Aviso si TODOS los archivos fallaron validación — bloquea submit */}
+          {allFilesFailed && (
+            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+              <div>
+                <p className="font-medium">Ningún archivo es válido</p>
+                <p className="text-xs">Quita los archivos con error o sube otros válidos antes de guardar.</p>
+              </div>
+            </div>
           )}
         </div>
       )}
@@ -444,7 +464,7 @@ export function CaseForm({ initialData, onSubmit, onCancel, isLoading }: CaseFor
         </button>
         <button
           type="submit"
-          disabled={isLoading || parseState === "parsing"}
+          disabled={isLoading || parseState === "parsing" || allFilesFailed}
           className="px-5 py-2 bg-minka-500 text-white rounded-lg hover:bg-minka-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading ? (

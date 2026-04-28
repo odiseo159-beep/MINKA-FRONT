@@ -22,6 +22,13 @@ export default function RegistroPage() {
     e.preventDefault();
     setError("");
 
+    const emailNorm = email.trim().toLowerCase();
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(emailNorm)) {
+      setError("Ingresa un correo electrónico válido");
+      return;
+    }
+
     if (password.length < 10) {
       setError("La contraseña debe tener al menos 10 caracteres");
       return;
@@ -35,7 +42,7 @@ export default function RegistroPage() {
     setIsLoading(true);
 
     try {
-      await register({ nombre, email, password });
+      await register({ nombre: nombre.trim(), email: emailNorm, password });
       router.push("/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al crear la cuenta");
