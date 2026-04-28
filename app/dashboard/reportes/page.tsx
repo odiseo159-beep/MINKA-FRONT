@@ -6,12 +6,6 @@ import { OnboardingTour } from "@/components/onboarding-tour";
 
 const REPORTES_TOUR_STEPS = [
   {
-    target: "reportes-graficos",
-    title: "Reportes y gráficos",
-    body: "Visualiza la distribución de tus casos por estado, tipo y evolución mensual. Filtra por período con los botones de arriba.",
-    placement: "bottom" as const,
-  },
-  {
     target: "reportes-exportar",
     title: "Exportar reporte",
     body: "Descarga el reporte completo como PDF para compartirlo o archivarlo.",
