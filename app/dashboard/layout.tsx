@@ -7,6 +7,7 @@ import { Sidebar } from "@/components/sidebar";
 import { Header } from "@/components/header";
 import { MobileSidebar } from "@/components/mobile-sidebar";
 import { PrivacyModal } from "@/components/privacy-modal";
+import { OnboardingTour } from "@/components/onboarding-tour";
 
 export default function DashboardLayout({
   children,
@@ -67,6 +68,7 @@ export default function DashboardLayout({
           setShowPrivacy(false);
         }}
       />
+      {!showPrivacy && <OnboardingTour />}
 
       {/* Desktop sidebar */}
       <Sidebar currentPath={pathname} />

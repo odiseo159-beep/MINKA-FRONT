@@ -204,6 +204,7 @@ export const CODIGO_LABELS: Record<string, string> = {
   L30364: "Ley 30364 — Violencia contra la Mujer",
   L29497: "Ley 29497 — Nueva Ley Procesal del Trabajo",
   LPAG: "Ley 27444 — Procedimiento Administrativo General",
+  LPCA: "Ley 27584 — Proceso Contencioso Administrativo",
   CT: "Código Tributario",
   LGS: "Ley General de Sociedades (Ley 26887)",
   CPCo: "Código Procesal Constitucional",

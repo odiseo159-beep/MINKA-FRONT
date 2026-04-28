@@ -7,6 +7,7 @@ import rehypeSanitize from "rehype-sanitize";
 import { FileSearch, Scale, FileText, Loader2, AlertCircle, RotateCcw } from "lucide-react";
 import { agentApi, type AgentRequest, type AgentResponse } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
+import { HintTooltip } from "@/components/hint-tooltip";
 
 interface LegalAgentPanelProps {
   casoId: number;
@@ -89,6 +90,13 @@ export function LegalAgentPanel({ casoId, tieneDocumentos }: LegalAgentPanelProp
 
   return (
     <div className="space-y-4">
+      <div className="flex items-center gap-1.5 mb-1">
+        <p className="text-sm text-gray-500">Selecciona una acción para este caso</p>
+        <HintTooltip
+          text="El agente usa IA + los documentos del caso + normativa peruana. Analizar requiere documentos subidos. Asesorar y Redactar pueden funcionar solo con los datos del caso."
+          position="right"
+        />
+      </div>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {ACCIONES.map(({ id, label, icon: Icon, description, requiereDocumentos }) => {
           const disabled = (requiereDocumentos && !tieneDocumentos) || state === "loading";

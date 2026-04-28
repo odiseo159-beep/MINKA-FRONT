@@ -4,16 +4,39 @@ import { useState } from "react";
 import { BookOpen, ChevronDown, ChevronUp, Search, AlertCircle } from "lucide-react";
 import { useNormativa } from "@/hooks/use-normativa";
 import { CASE_TYPE_LABELS, CODIGO_LABELS } from "@/types";
+import { HintTooltip } from "@/components/hint-tooltip";
 
 const TIPO_CASO_CODIGOS: Record<string, string[]> = {
-  penal_estafa: ["CP", "CPP"],
-  penal_robo: ["CP", "CPP"],
-  penal_lesiones: ["CP", "CPP"],
-  laboral: ["NLPT"],
-  familia_alimentos: ["CC", "CNA", "CPC"],
-  familia_tenencia: ["CC", "CNA", "CPC"],
-  civil_desalojo: ["CC", "CPC"],
-  civil_otro: ["CC", "CPC"],
+  // Penal
+  penal_estafa:              ["CP", "CPP"],
+  penal_robo:                ["CP", "CPP"],
+  penal_lesiones:            ["CP", "CPP"],
+  penal_violencia_familiar:  ["L30364", "CP", "CPP"],
+  penal_homicidio:           ["CP", "CPP"],
+  penal_corrupcion:          ["CP", "CPP", "L30077"],
+  penal_tid:                 ["CP", "CPP", "L30077"],
+  penal_lavado:              ["CP", "CPP", "L30077"],
+  // Laboral
+  laboral:                   ["NLPT"],
+  // Familia
+  familia_alimentos:         ["CC", "CNA", "CPC"],
+  familia_tenencia:          ["CC", "CNA", "CPC"],
+  familia_divorcio:          ["CC", "CPC"],
+  // Civil
+  civil_desalojo:            ["CC", "CPC"],
+  civil_otro:                ["CC", "CPC"],
+  sucesiones:                ["CC", "CPC"],
+  inmobiliario:              ["CC", "CPC", "CONST"],
+  // Administrativo
+  administrativo_recurso:    ["LPAG"],
+  administrativo_contencioso:["LPCA", "LPAG"],
+  // Tributario
+  tributario:                ["CT"],
+  // Constitucional
+  constitucional:            ["CONST", "CPCo"],
+  // Comercial
+  comercial_contrato:        ["CC"],
+  comercial_societario:      ["LGS"],
 };
 
 function buildNormativaQuery(tipoCaso: string, notas?: string): string {
@@ -56,6 +79,10 @@ export function NormativaPanel({ tipoCaso, notas }: NormativaPanelProps) {
         <div className="flex items-center gap-2">
           <BookOpen className="w-5 h-5 text-minka-500" />
           <h2 className="text-lg font-semibold text-gray-900">Normativa aplicable</h2>
+          <HintTooltip
+            text="Artículos de los códigos peruanos más relevantes para este tipo de caso. Usa el ícono de búsqueda para buscar artículos específicos."
+            position="right"
+          />
           {data && data.articulos.length > 0 && (
             <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full">
               {data.articulos.length}

@@ -10,6 +10,7 @@ import { STATUS_LABELS, CASE_TYPE_LABELS } from "@/types";
 import { parseDocxFile, mapBackendResponse, parseImageFile, type ParsedDocument } from "@/lib/document-parser";
 import { documentApi } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
+import { HintTooltip } from "@/components/hint-tooltip";
 
 // Validation schema
 const caseSchema = z.object({
@@ -174,9 +175,13 @@ export function CaseForm({ initialData, onSubmit, onCancel, isLoading }: CaseFor
       {/* Upload de documento (solo para crear, no editar) */}
       {!initialData && (
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
             Cargar documento del caso
-            <span className="font-normal text-gray-400 ml-1">(opcional)</span>
+            <span className="font-normal text-gray-400">(opcional)</span>
+            <HintTooltip
+              text="Sube un PDF o DOCX y Minka extraerá automáticamente el nombre del cliente, expediente, tipo de caso y más."
+              position="right"
+            />
           </label>
 
           {uploadState === "idle" && (
