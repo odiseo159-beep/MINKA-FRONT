@@ -16,8 +16,8 @@ export default function ConfiguracionPage() {
   const [estudioId, setEstudioId] = useState<number | null>(null);
 
   const [perfil, setPerfil] = useState({
-    nombre: user?.nombre || "Daniel",
-    email: user?.email || "daniel@simplifai.pe",
+    nombre: "",
+    email: "",
     telefono: "",
     colegiatura: "",
   });
@@ -33,10 +33,10 @@ export default function ConfiguracionPage() {
   const [webhookCopied, setWebhookCopied] = useState(false);
 
   const [estudio, setEstudio] = useState({
-    nombre: "SimplifAI Legal",
+    nombre: "",
     ruc: "",
     direccion: "",
-    plan: "Pro",
+    plan: "starter",
   });
 
   const NOTIF_KEY = "minka_notificaciones";
@@ -72,6 +72,8 @@ export default function ConfiguracionPage() {
           estudiosApi.getAll(token || undefined),
         ]);
         if (abogados.length > 0) {
+          // Backend filtra por email del usuario autenticado, así que [0] es
+          // el abogado del usuario actual (no de otra cuenta).
           const a = abogados[0];
           setAbogadoId(a.id);
           setPerfil({
@@ -80,11 +82,18 @@ export default function ConfiguracionPage() {
             telefono: a.telefono || "",
             colegiatura: a.colegiatura || "",
           });
-          // Hydrate Whapi state from saved abogado
           if (a.whapi_channel_id) {
             setWhapiSavedChannelId(a.whapi_channel_id);
             setWhapiSavedNumber(a.whatsapp_numero || "");
           }
+        } else {
+          // Cuenta nueva sin abogado todavía: pre-llenar nombre/email del JWT
+          // para que el usuario no tenga que retipearlos.
+          setPerfil((prev) => ({
+            ...prev,
+            nombre: user?.nombre || "",
+            email: user?.email || "",
+          }));
         }
         if (estudios.length > 0) {
           const e = estudios[0];
