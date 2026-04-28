@@ -153,15 +153,42 @@ export async function parseDocxFile(file: File): Promise<ParsedDocument> {
     }
   }
 
-  // --- Estado: si hay "diligencias preliminares" → en_tramite, sino → nuevo ---
-  if (
-    /diligencias preliminares/i.test(text) ||
-    /investigaci[oó]n preparatoria/i.test(text)
-  ) {
-    caseData.estado = "en_tramite";
-    fieldsFound.push("estado");
-  } else {
+  // --- Estado: inferido por keywords, de mayor a menor especificidad ---
+  const estadoKeywords: { pattern: RegExp; estado: string }[] = [
+    { pattern: /requerimiento\s*acusatorio|acusaci[oó]n\s*fiscal|juicio\s*oral/i,  estado: "en_audiencia" },
+    { pattern: /apelaci[oó]n/i,                                                     estado: "en_apelacion" },
+    { pattern: /audiencia/i,                                                         estado: "en_audiencia" },
+    { pattern: /prisi[oó]n\s*preventiva/i,                                           estado: "en_tramite"   },
+    { pattern: /investigaci[oó]n\s*preparatoria|diligencias\s*preliminares/i,        estado: "en_tramite"   },
+    { pattern: /sentencia\s*condenatoria|sentencia\s*absolutoria/i,                  estado: "resuelto"     },
+  ];
+  let estadoFound = false;
+  for (const { pattern, estado } of estadoKeywords) {
+    if (pattern.test(text)) {
+      caseData.estado = estado;
+      fieldsFound.push("estado");
+      estadoFound = true;
+      break;
+    }
+  }
+  if (!estadoFound) {
     caseData.estado = "nuevo";
+  }
+
+  // --- Próxima acción ---
+  const proxAccionPatterns = [
+    /(?:Juicio\s*oral|Audiencia\s*de\s*control\s*de\s*acusaci[oó]n)\s*:\s*(.+)/i,
+    /pr[oó]xima\s*(?:audiencia|diligencia|fecha)\s*:\s*(.+)/i,
+    /PROXIMOS?\s+PASOS?[^\n]*\n+([^\n]{10,})/i,
+    /siguiente\s*paso\s*:\s*(.+)/i,
+  ];
+  for (const pattern of proxAccionPatterns) {
+    const match = text.match(pattern);
+    if (match) {
+      caseData.proxima_accion = match[1].trim().split("\n")[0];
+      fieldsFound.push("proxima_accion");
+      break;
+    }
   }
 
   // --- Notas: resumen automático ---
@@ -196,9 +223,9 @@ export async function parseDocxFile(file: File): Promise<ParsedDocument> {
     fieldsFound.push("notas");
   }
 
-  // --- Documentos pendientes: extraer de medios probatorios ---
+  // --- Documentos pendientes: extraer de sección de docs/diligencias/medios ---
   const docsSection = text.match(
-    /MEDIOS PROBATORIOS([\s\S]*?)(?:V\.|DILIGENCIAS|POR TANTO)/i
+    /(?:MEDIOS PROBATORIOS|DOCUMENTOS PRESENTADOS|DILIGENCIAS ORDENADAS)([\s\S]*?)(?:[IVX]{1,4}\.|POR TANTO|$)/i
   );
   if (docsSection) {
     // Solo partir en ítems numerados al inicio de línea (ej: "1.- ", "2) "), no dentro de montos

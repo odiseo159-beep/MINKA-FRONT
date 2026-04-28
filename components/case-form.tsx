@@ -39,7 +39,7 @@ interface QueuedFile {
 
 interface CaseFormProps {
   initialData?: Case;
-  onSubmit: (data: CaseFormData, files?: File[]) => Promise<void>;
+  onSubmit: (data: CaseFormData, files?: File[], extractedFields?: Partial<CaseFormData>) => Promise<void>;
   onCancel: () => void;
   isLoading?: boolean;
 }
@@ -163,15 +163,16 @@ export function CaseForm({ initialData, onSubmit, onCancel, isLoading }: CaseFor
   }, [addFiles]);
 
   const handleFormSubmit = useCallback(async (formData: CaseFormData) => {
-    const primaryResult = queue.find((q) => q.role === "primary")?.parseResult;
+    const primaryEntry = queue.find((q) => q.role === "primary");
     const files = queue.filter((q) => !q.error).map((q) => q.file);
     await onSubmit(
       {
         ...formData,
         telefono: formData.telefono.replace(/[\s\-\(\)]/g, "").replace(/^\+/, "").replace(/^51(\d{9})$/, "$1"),
-        ...(primaryResult?.rawText ? { documento_texto: primaryResult.rawText } : {}),
+        ...(primaryEntry?.parseResult?.rawText ? { documento_texto: primaryEntry.parseResult.rawText } : {}),
       },
       files.length ? files : undefined,
+      primaryEntry?.parseResult?.caseData,
     );
   }, [onSubmit, queue]);
 

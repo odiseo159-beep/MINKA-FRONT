@@ -112,13 +112,16 @@ function CasosContent() {
   };
 
   // Handle form submit
-  const handleSubmit = async (data: CaseFormData, files?: File[]) => {
+  const handleSubmit = async (data: CaseFormData, files?: File[], extractedFields?: Partial<CaseFormData>) => {
     try {
       if (editingCase) {
         await updateCase.mutateAsync({ id: editingCase.id, data });
         toast({ title: "Caso actualizado", description: "Los cambios se guardaron correctamente." });
       } else {
-        const newCase = await createCase.mutateAsync(data);
+        const createPayload = extractedFields
+          ? { ...data, extracted_fields: JSON.stringify(extractedFields) }
+          : data;
+        const newCase = await createCase.mutateAsync(createPayload as CaseFormData);
         if (files?.length && newCase?.id) {
           let uploaded = 0;
           for (const f of files) {
