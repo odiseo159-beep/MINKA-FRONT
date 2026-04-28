@@ -37,12 +37,25 @@ export async function parseDocxFile(file: File): Promise<ParsedDocument> {
     }
   }
 
-  // --- Nombre del cliente (denunciante/demandante) ---
-  // Usar [ \t] en vez de \s para no capturar saltos de línea
+  // --- Nombre del cliente (rol del actor según el tipo de proceso) ---
+  // Usar [ \t] en vez de \s para no capturar saltos de línea.
+  // Cubrir distintos roles del actor en procesos peruanos:
+  //  - DENUNCIANTE / AGRAVIADO  → penal
+  //  - DEMANDANTE / ACTOR       → civil, laboral, familia, contencioso
+  //  - RECURRENTE / IMPUGNANTE  → administrativo, recursos
+  //  - SOLICITANTE              → procedimiento administrativo, no contencioso
+  //  - ACCIONANTE               → amparo, habeas corpus, acciones constitucionales
+  //  - USUARIO                  → quejas/reclamos en INDECOPI, OSIPTEL, etc.
   const clientPatterns = [
     /DENUNCIANTE:\s*([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑA-záéíóúñ \t,]+)/i,
     /DEMANDANTE:\s*([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑA-záéíóúñ \t,]+)/i,
     /AGRAVIADO:\s*([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑA-záéíóúñ \t,]+)/i,
+    /RECURRENTE:\s*([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑA-záéíóúñ \t,]+)/i,
+    /SOLICITANTE:\s*([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑA-záéíóúñ \t,]+)/i,
+    /IMPUGNANTE:\s*([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑA-záéíóúñ \t,]+)/i,
+    /ACCIONANTE:\s*([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑA-záéíóúñ \t,]+)/i,
+    /ACTOR:\s*([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑA-záéíóúñ \t,]+)/i,
+    /USUARIO:\s*([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑA-záéíóúñ \t,]+)/i,
     /([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+ (?:[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+ )*[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+),?\s*identificad[oa]\s*con\s*DNI/i,
   ];
   for (const pattern of clientPatterns) {
