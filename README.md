@@ -1,74 +1,31 @@
 # Minka Frontend — Next.js 14
 
-Frontend moderno para el dashboard de Minka, el asistente legal AI por WhatsApp.
+Frontend del dashboard de Minka, asistente legal AI para abogados peruanos por WhatsApp.
+
+> El abogado actualiza el caso. Minka avisa al cliente. 24/7, en su WhatsApp, en español.
 
 ## Stack
 
-- **Framework**: Next.js 14 (App Router)
-- **Styling**: Tailwind CSS
-- **State**: Zustand + React Query
+- **Framework**: Next.js 14.2 (App Router) — pinned, no subir a 15+
+- **Lenguaje**: TypeScript 5.4
+- **Styling**: Tailwind CSS 3.4
+- **State**: Zustand (auth, notifications) + TanStack Query (server state)
 - **Forms**: React Hook Form + Zod
-- **UI**: Radix UI primitives + Lucide icons
-- **Testing**: Vitest + React Testing Library
-- **Backend**: FastAPI (Railway)
-
-## Estructura
-
-```
-minka-frontend/
-├── app/
-│   ├── layout.tsx              # Root layout + metadata
-│   ├── page.tsx                # Redirect a /dashboard
-│   ├── globals.css             # Tailwind + CSS vars + animations
-│   ├── login/page.tsx          # Página de login
-│   └── dashboard/
-│       ├── layout.tsx          # Layout con sidebar + mobile drawer
-│       ├── page.tsx            # Home con stats y actividad
-│       ├── casos/page.tsx      # Lista de casos con CRUD completo
-│       ├── casos/[id]/page.tsx # Detalle de caso
-│       └── calendario/page.tsx # Placeholder
-├── components/
-│   ├── ui/                     # Componentes base (toast)
-│   ├── sidebar.tsx             # Navegación lateral (desktop)
-│   ├── mobile-sidebar.tsx      # Drawer slide-in (mobile)
-│   ├── header.tsx              # Header con hamburger + user menu
-│   ├── stats-cards.tsx         # Tarjetas de estadísticas
-│   ├── case-form.tsx           # Formulario de casos (crear/editar)
-│   ├── case-card.tsx           # Vista de caso como card (mobile)
-│   ├── filter-bar.tsx          # Barra de filtros avanzados + chips
-│   ├── pagination.tsx          # Paginación con selector de filas
-│   ├── skeletons.tsx           # Loading skeletons (tabla, cards, stats)
-│   └── empty-states.tsx        # Empty states con SVG (no-cases, no-results, error)
-├── hooks/
-│   ├── use-cases.ts            # React Query hooks para CRUD de casos
-│   ├── use-debounce.ts         # Hook genérico de debounce
-│   ├── use-sort.ts             # Hook + función de sorting
-│   └── use-pagination.ts       # Hook de paginación client-side
-├── lib/
-│   ├── api.ts                  # Cliente API para FastAPI
-│   ├── auth-store.ts           # Zustand store para auth
-│   └── utils.ts                # Utilidades (cn, formatters, parseDate)
-├── types/
-│   └── index.ts                # TypeScript types + labels + colors
-└── __tests__/
-    ├── lib/utils.test.ts       # Tests de utilidades
-    └── hooks/                  # Tests de hooks (sort, pagination, debounce)
-```
+- **UI**: Radix primitives + Lucide icons
+- **Charts**: recharts
+- **Tests**: Vitest + React Testing Library
+- **Backend**: FastAPI (Railway) — repo `minka-legal`
 
 ## Instalación
 
 ```bash
-# 1. Instalar dependencias
 npm install
-
-# 2. Configurar variables de entorno
 cp .env.example .env.local
-
-# 3. Ejecutar en desarrollo
+# Editar NEXT_PUBLIC_API_URL
 npm run dev
 ```
 
-Abrir [http://localhost:3000](http://localhost:3000)
+[http://localhost:3000](http://localhost:3000)
 
 ## Variables de Entorno
 
@@ -82,71 +39,107 @@ Abrir [http://localhost:3000](http://localhost:3000)
 npm run dev        # Desarrollo (localhost:3000)
 npm run build      # Build de producción
 npm run lint       # ESLint
-npm test           # Ejecutar tests (Vitest)
-npm run test:watch # Tests en modo watch
+npx tsc --noEmit   # Type-check
+npx vitest         # Tests unitarios
 ```
-
-## Estado actual
-
-**Auth**: El login está temporalmente bypassed (redirect directo a /dashboard) porque el backend aún no tiene los endpoints `/auth/*` integrados. Cuando estén listos, restaurar el auth guard en `app/page.tsx` y `app/dashboard/layout.tsx`.
-
-**Notificaciones**: El botón de notificar por WhatsApp existe en la UI, pero el endpoint `POST /api/casos/:id/notificar` aún no está implementado en el backend.
 
 ## Funcionalidades
 
-### Dashboard Home
-- 4 tarjetas de estadísticas (total, activos, resueltos, pendientes)
-- Lista de casos urgentes (próxima fecha <= 7 días)
-- Actividad reciente
-- Acciones rápidas
+### Autenticación
+- Login + registro con rate limiting backend
+- JWT con refresh sliding
+- Auth guard en `/dashboard/*`
+- Multi-tenant: cada abogado ve sólo sus casos / clientes / configuración
 
 ### Casos
-- Tabla con búsqueda debounced y filtros avanzados (estado, tipo, rango de fechas)
-- Chips de filtros activos con opción de limpiar
-- Ordenamiento por columnas (click en headers)
-- Paginación (10/25/50 por página)
-- CRUD completo (crear, editar con modal)
-- Vista responsive: tabla en desktop, cards en mobile
-- Notificar cliente por WhatsApp
-- Estados con colores distintivos
-- Fechas con indicador de urgencia
-- Loading skeletons y empty states con ilustraciones SVG
+- CRUD completo con vista responsive (tabla desktop, cards móvil)
+- Multi-upload de documentos (.docx/.pdf/.imagen) con progress UI
+- Detalle por pestañas: Detalle / Documentos / Agente Legal IA
+- Quick-edit de estado y próxima fecha desde el header (sin abrir modal)
+- Notificación al cliente por WhatsApp (mensaje con nombre del abogado)
+- Filtros avanzados, ordenamiento por columna, paginación
 
-### Responsive
-- Sidebar colapsable en mobile (hamburger menu)
-- Drawer slide-in con navegación completa
-- Cards view para casos en pantallas pequeñas
-- Filtros apilables en mobile
+### Agente Legal IA (por caso)
+4 acciones que invocan el backend con contexto del caso + documentos:
+- **Analizar caso** — síntesis estructurada + riesgos
+- **Redactar escrito** — sub-form para tipo de escrito
+- **Buscar normativa** — corpus indexado (LPAG, plenos casatorios, TC, etc.)
+- **Asesoría procesal** — siguiente etapa, plazo legal, documentos a preparar
+
+### Documentos
+- Parseo .docx 100% client-side con mammoth.js (no se envía al servidor)
+- Imágenes y PDF → backend con Claude Vision para extracción
+- Storage en Cloudflare R2 con encriptación Fernet
+- Descarga via URL firmada temporal
+
+### Calendario
+Vista mensual / semanal / diaria con eventos de los casos.
+
+### Calculadora de plazos legales
+Suma días hábiles considerando feriados peruanos. Configurable: hábiles, calendarios, naturales.
+
+### Reportes
+Charts de casos por estado, tipo, evolución mensual. Export a PDF.
+
+### Configuración
+- Perfil del abogado y datos del estudio
+- Integración WhatsApp: pegar token Whapi → conectar canal → URL de webhook auto-generada
+- Verificar y actualizar número (cuando re-paireas con otro WhatsApp)
+- Preferencias de notificación
+
+### Aprendizaje IA (solo admin)
+Dashboard del feedback loop: correcciones del abogado sobre extracción IA, agregadas por tipo de caso y campo, usadas para mejorar prompts.
 
 ## Conexión con Backend
 
-El frontend consume la API FastAPI en Railway:
+El frontend consume API FastAPI en Railway (volumen persistente `/app/data` para SQLite). Endpoints principales:
+
+- `/auth/*` — login, register, verificar, refresh, logout, cambiar-password
+- `/api/casos[/{id}]` — CRUD + notificar
+- `/api/casos/{id}/documentos` — multi-doc + URL firmada
+- `/api/abogados[/{id}]` — perfil + Whapi config (filtrado por email del JWT)
+- `/api/estudios[/{id}]` — estudio jurídico
+- `/api/agente/*` — Legal Agent
+- `/api/calcular-plazo` `/api/feriados` — calculadora
+- `/api/corrections/*` — feedback loop
+
+CORS: el backend permite `localhost:3000` y `minka-front.vercel.app`.
+
+## Deploy
+
+- **Frontend**: Vercel (`minka-front.vercel.app`), auto-deploy en push a `main`
+- **Backend**: Railway, repo separado `github.com/odiseo159-beep/MINKA-legal`
+
+## Estructura
 
 ```
-GET  /api/casos           # Listar casos
-POST /api/casos           # Crear caso
-GET  /api/casos/:id       # Obtener caso
-PUT  /api/casos/:id       # Actualizar caso
-DELETE /api/casos/:id     # Eliminar caso
-GET  /api/casos/stats     # Estadísticas
+app/dashboard/
+├── casos/{,[id]/}page.tsx    # Lista + detalle por pestañas
+├── calendario/, clientes/, reportes/, calculadora/
+├── notificaciones/, configuracion/
+└── aprendizaje/page.tsx       # Solo admin
+
+components/
+├── case-form.tsx              # Multi-upload + progress
+├── date-input-pe.tsx          # Input dd/mm/aaaa custom (Chrome ignora lang)
+├── documentos-panel.tsx       # Multi-doc + R2 signed download
+├── legal-agent-panel.tsx      # 4 acciones IA por caso
+├── caso-chat-panel.tsx, normativa-panel.tsx
+├── onboarding-tour.tsx        # Tour por sección
+└── filter-bar.tsx, case-card.tsx, ...
+
+lib/
+├── api.ts                     # Cliente FastAPI
+├── auth-store.ts              # Zustand persist
+├── document-parser.ts         # Mammoth.js
+└── utils.ts                   # parseDate UTC-aware, formatDate, etc.
 ```
 
-**Nota CORS**: El backend debe permitir requests desde `localhost:3000` (desarrollo) y el dominio de Vercel (producción).
+## Identidad visual
 
-## Deploy en Vercel
-
-1. Conectar repo a Vercel
-2. Configurar variable `NEXT_PUBLIC_API_URL`
-3. Deploy automático en cada push
-
-## Colores
-
-```
-Primary: #C0392B (minka-500)
-```
-
-Estados: Nuevo (azul), En trámite (amber), En audiencia (morado), Pendiente doc (amarillo), Resuelto (verde), Archivado (gris)
+- **Primary**: `#C0392B` (`minka-500`)
+- Estados: nuevo (azul), en trámite (amber), en audiencia (morado), pendiente doc (amarillo), en apelación (índigo), resuelto (verde), archivado (gris)
 
 ## Licencia
 
-MIT — SimplifAI (simplifai.pe)
+MIT — SimplifAI ([simplifai.pe](https://simplifai.pe))
