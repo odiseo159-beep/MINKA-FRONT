@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useCases, useCreateCase, useUpdateCase, useNotifyClient, filterCases } from "@/hooks/use-cases";
+import { useCases, useCreateCase, useUpdateCase, useDeleteCase, useNotifyClient, filterCases } from "@/hooks/use-cases";
 import { casesApi, caseDocumentosApi } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -24,6 +24,7 @@ import { FilterBar } from "@/components/filter-bar";
 import {
   Edit2,
   MessageSquare,
+  Trash2,
   X,
   ArrowUp,
   ArrowDown,
@@ -66,6 +67,7 @@ function CasosContent() {
   const { data: cases, isLoading, error, refetch } = useCases();
   const createCase = useCreateCase();
   const updateCase = useUpdateCase();
+  const deleteCase = useDeleteCase();
   const notifyClient = useNotifyClient();
   const { toast } = useToast();
   const token = useAuthStore((state) => state.token);
@@ -186,6 +188,26 @@ function CasosContent() {
     setIsModalOpen(true);
   };
 
+  const handleDelete = async (caso: Case) => {
+    const confirmacion = confirm(
+      `¿Eliminar el caso de ${caso.nombre_cliente}?\n\n` +
+      `Expediente: ${caso.expediente || "(sin expediente)"}\n\n` +
+      `Esta acción se puede revertir contactando al admin (soft delete). ` +
+      `El cliente y sus mensajes ya NO recibirán notificaciones.`
+    );
+    if (!confirmacion) return;
+    try {
+      await deleteCase.mutateAsync(caso.id);
+      toast({ title: "Caso eliminado", description: `Caso de ${caso.nombre_cliente} eliminado correctamente.` });
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: err instanceof Error ? err.message : "No se pudo eliminar el caso",
+        variant: "destructive",
+      });
+    }
+  };
+
   const closeModal = () => { setIsModalOpen(false); setEditingCase(null); };
 
   const handleModalKeyDown = (e: React.KeyboardEvent) => {
@@ -243,6 +265,7 @@ function CasosContent() {
               caso={caso}
               onEdit={handleEdit}
               onNotify={handleNotify}
+              onDelete={handleDelete}
             />
           ))
         )}
@@ -366,6 +389,14 @@ function CasosContent() {
                           className="min-h-[44px] min-w-[44px] flex items-center justify-center text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
                         >
                           <MessageSquare className="w-4 h-4" aria-hidden="true" />
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleDelete(caso); }}
+                          disabled={deleteCase.isPending}
+                          aria-label={`Eliminar caso de ${caso.nombre_cliente}`}
+                          className="min-h-[44px] min-w-[44px] flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                        >
+                          <Trash2 className="w-4 h-4" aria-hidden="true" />
                         </button>
                       </div>
                     </td>

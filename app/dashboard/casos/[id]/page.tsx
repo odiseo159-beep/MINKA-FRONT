@@ -3,13 +3,14 @@
 import { useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { useCase, useUpdateCase, useNotifyClient } from "@/hooks/use-cases";
+import { useCase, useUpdateCase, useNotifyClient, useDeleteCase } from "@/hooks/use-cases";
 import { useToast } from "@/components/ui/use-toast";
 import { formatDate, formatRelativeTime, getDateUrgencyClass } from "@/lib/utils";
 import { STATUS_LABELS, STATUS_COLORS, CASE_TYPE_LABELS } from "@/types";
 import {
   ArrowLeft,
   Edit2,
+  Trash2,
   MessageSquare,
   Phone,
   Calendar,
@@ -36,6 +37,7 @@ export default function CaseDetailPage() {
   const { data: caso, isLoading, error } = useCase(id);
   const { data: documentosNuevos } = useDocumentosCaso(id);
   const notifyClient = useNotifyClient();
+  const deleteCase = useDeleteCase();
   const { toast } = useToast();
   const token = useAuthStore((state) => state.token);
 
@@ -61,10 +63,32 @@ export default function CaseDetailPage() {
       });
       toast({ title: "Notificación enviada", description: `Se notificó a ${caso.nombre_cliente}` });
     } catch (err) {
-      toast({ 
-        title: "Error", 
+      toast({
+        title: "Error",
         description: "No se pudo enviar la notificación",
         variant: "destructive"
+      });
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!caso) return;
+    const confirmacion = confirm(
+      `¿Eliminar el caso de ${caso.nombre_cliente}?\n\n` +
+      `Expediente: ${caso.expediente || "(sin expediente)"}\n\n` +
+      `Esta acción se puede revertir contactando al admin (soft delete). ` +
+      `El cliente ya NO recibirá notificaciones.`
+    );
+    if (!confirmacion) return;
+    try {
+      await deleteCase.mutateAsync(caso.id);
+      toast({ title: "Caso eliminado", description: `Caso de ${caso.nombre_cliente} eliminado.` });
+      router.push("/dashboard/casos");
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: err instanceof Error ? err.message : "No se pudo eliminar el caso",
+        variant: "destructive",
       });
     }
   };
@@ -148,6 +172,15 @@ export default function CaseDetailPage() {
             <Edit2 className="w-4 h-4" aria-hidden="true" />
             Editar
           </Link>
+          <button
+            onClick={handleDelete}
+            disabled={deleteCase.isPending}
+            aria-label={`Eliminar caso de ${caso.nombre_cliente}`}
+            className="flex items-center gap-2 px-4 py-2 border border-red-300 text-red-700 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50"
+          >
+            <Trash2 className="w-4 h-4" aria-hidden="true" />
+            {deleteCase.isPending ? "Eliminando..." : "Eliminar"}
+          </button>
         </div>
       </div>
 

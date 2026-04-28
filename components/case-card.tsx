@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Edit2, MessageSquare } from "lucide-react";
+import { Edit2, MessageSquare, Trash2 } from "lucide-react";
 import { formatDate, formatRelativeTime, getDateUrgencyClass } from "@/lib/utils";
 import { STATUS_LABELS, STATUS_COLORS, CASE_TYPE_LABELS } from "@/types";
 import type { Case } from "@/types";
@@ -10,9 +10,10 @@ interface CaseCardProps {
   caso: Case;
   onEdit: (caso: Case) => void;
   onNotify: (caso: Case) => void;
+  onDelete?: (caso: Case) => void;
 }
 
-export function CaseCard({ caso, onEdit, onNotify }: CaseCardProps) {
+export function CaseCard({ caso, onEdit, onNotify, onDelete }: CaseCardProps) {
   const router = useRouter();
 
   return (
@@ -66,6 +67,15 @@ export function CaseCard({ caso, onEdit, onNotify }: CaseCardProps) {
         >
           <MessageSquare className="w-4 h-4" aria-hidden="true" />
         </button>
+        {onDelete && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onDelete(caso); }}
+            aria-label={`Eliminar caso de ${caso.nombre_cliente}`}
+            className="min-h-[44px] min-w-[44px] flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+          >
+            <Trash2 className="w-4 h-4" aria-hidden="true" />
+          </button>
+        )}
       </div>
     </div>
   );
