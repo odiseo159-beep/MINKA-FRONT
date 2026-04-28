@@ -8,6 +8,7 @@ import { FileSearch, Scale, FileText, Loader2, AlertCircle, RotateCcw, RefreshCw
 import { agentApi, type AgentRequest, type AgentResponse } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
 import { HintTooltip } from "@/components/hint-tooltip";
+import { processChildrenWithCitas } from "@/components/cita-pill";
 
 interface LegalAgentPanelProps {
   casoId: number;
@@ -248,7 +249,20 @@ export function LegalAgentPanel({ casoId, tieneDocumentos }: LegalAgentPanelProp
             [&_th]:bg-gray-50 [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-semibold [&_th]:border [&_th]:border-gray-200
             [&_td]:px-3 [&_td]:py-1.5 [&_td]:border [&_td]:border-gray-200 [&_td]:align-top
             [&_hr]:border-gray-200">
-            <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>{activeAS.resultado.resultado}</ReactMarkdown>
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              rehypePlugins={[rehypeSanitize]}
+              components={{
+                p: ({ children }) => <p>{processChildrenWithCitas(children)}</p>,
+                li: ({ children }) => <li>{processChildrenWithCitas(children)}</li>,
+                td: ({ children }) => <td>{processChildrenWithCitas(children)}</td>,
+                th: ({ children }) => <th>{processChildrenWithCitas(children)}</th>,
+                strong: ({ children }) => <strong>{processChildrenWithCitas(children)}</strong>,
+                em: ({ children }) => <em>{processChildrenWithCitas(children)}</em>,
+              }}
+            >
+              {activeAS.resultado.resultado}
+            </ReactMarkdown>
           </div>
         </div>
       )}
