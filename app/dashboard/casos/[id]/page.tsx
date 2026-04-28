@@ -20,14 +20,15 @@ import {
   Scale,
   Lock,
   Sparkles,
+  X,
 } from "lucide-react";
 import { NormativaPanel } from "@/components/normativa-panel";
 import { CasoChatPanel } from "@/components/caso-chat-panel";
 import { DocumentosPanel } from "@/components/documentos-panel";
 import { LegalAgentPanel } from "@/components/legal-agent-panel";
-import { casesApi } from "@/lib/api";
-import { useAuthStore } from "@/lib/auth-store";
+import { CaseForm } from "@/components/case-form";
 import { useDocumentosCaso } from "@/hooks/use-documentos";
+import type { CaseFormData } from "@/types";
 
 export default function CaseDetailPage() {
   const params = useParams();
@@ -37,13 +38,14 @@ export default function CaseDetailPage() {
   const { data: caso, isLoading, error } = useCase(id);
   const { data: documentosNuevos } = useDocumentosCaso(id);
   const notifyClient = useNotifyClient();
+  const updateCase = useUpdateCase();
   const deleteCase = useDeleteCase();
   const { toast } = useToast();
-  const token = useAuthStore((state) => state.token);
 
   const [aiSeedQuery, setAiSeedQuery] = useState<string | undefined>(undefined);
   const chatSectionRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState<"detalle" | "agente">("detalle");
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const triggerAiAction = (query: string) => {
     setActiveTab("detalle");
@@ -67,6 +69,21 @@ export default function CaseDetailPage() {
         title: "Error",
         description: "No se pudo enviar la notificación",
         variant: "destructive"
+      });
+    }
+  };
+
+  const handleEditSubmit = async (data: CaseFormData) => {
+    if (!caso) return;
+    try {
+      await updateCase.mutateAsync({ id: caso.id, data });
+      toast({ title: "Caso actualizado", description: "Los cambios se guardaron correctamente." });
+      setIsEditModalOpen(false);
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: err instanceof Error ? err.message : "No se pudo actualizar el caso",
+        variant: "destructive",
       });
     }
   };
@@ -165,13 +182,13 @@ export default function CaseDetailPage() {
               </>
             )}
           </button>
-          <Link
-            href={`/dashboard/casos?edit=${caso.id}`}
+          <button
+            onClick={() => setIsEditModalOpen(true)}
             className="flex items-center gap-2 px-4 py-2 bg-minka-500 text-white rounded-lg hover:bg-minka-600 transition-colors"
           >
             <Edit2 className="w-4 h-4" aria-hidden="true" />
             Editar
-          </Link>
+          </button>
           <button
             onClick={handleDelete}
             disabled={deleteCase.isPending}
@@ -401,6 +418,45 @@ export default function CaseDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Edit modal — abre en la misma página, sin redirect al lobby */}
+      {isEditModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/50"
+            aria-hidden="true"
+            onClick={() => !updateCase.isPending && setIsEditModalOpen(false)}
+          />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="edit-caso-title"
+            className="relative bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto"
+          >
+            <div className="sticky top-0 bg-white z-10 flex items-center justify-between px-6 py-4 border-b border-gray-200">
+              <h3 id="edit-caso-title" className="text-lg font-semibold text-gray-900">
+                Editar caso
+              </h3>
+              <button
+                onClick={() => !updateCase.isPending && setIsEditModalOpen(false)}
+                disabled={updateCase.isPending}
+                aria-label="Cerrar"
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg disabled:opacity-30"
+              >
+                <X className="w-5 h-5" aria-hidden="true" />
+              </button>
+            </div>
+            <div className="p-6">
+              <CaseForm
+                initialData={caso}
+                onSubmit={handleEditSubmit}
+                onCancel={() => setIsEditModalOpen(false)}
+                isLoading={updateCase.isPending}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

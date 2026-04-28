@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useCases, useCreateCase, useUpdateCase, useDeleteCase, useNotifyClient, filterCases } from "@/hooks/use-cases";
-import { casesApi, caseDocumentosApi } from "@/lib/api";
+import { caseDocumentosApi } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
 import { useDebounce } from "@/hooks/use-debounce";
 import { TableRowSkeleton } from "@/components/skeletons";
@@ -70,13 +70,19 @@ function CasosContent() {
   const deleteCase = useDeleteCase();
   const notifyClient = useNotifyClient();
   const { toast } = useToast();
-  const token = useAuthStore((state) => state.token);
 
   const [filters, setFilters] = useState<CaseFilters>(DEFAULT_FILTERS);
   const debouncedSearch = useDebounce(filters.search, 300);
   const { sortField, sortDirection, toggleSort } = useSortState();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCase, setEditingCase] = useState<Case | null>(null);
+  const [uploadStatus, setUploadStatus] = useState<{
+    phase: "creating" | "uploading";
+    current: number;
+    total: number;
+    fileName: string;
+    failed: string[];
+  } | null>(null);
   const modalRef = useRef<HTMLDivElement>(null);
   const lastFocusedRef = useRef<HTMLElement | null>(null);
 
@@ -129,24 +135,46 @@ function CasosContent() {
         await updateCase.mutateAsync({ id: editingCase.id, data });
         toast({ title: "Caso actualizado", description: "Los cambios se guardaron correctamente." });
       } else {
+        setUploadStatus({ phase: "creating", current: 0, total: files?.length ?? 0, fileName: "", failed: [] });
         const createPayload = extractedFields
           ? { ...data, extracted_fields: JSON.stringify(extractedFields) }
           : data;
         const newCase = await createCase.mutateAsync(createPayload as CaseFormData);
+
         if (files?.length && newCase?.id) {
+          const failed: string[] = [];
           let uploaded = 0;
-          for (const f of files) {
+          for (let i = 0; i < files.length; i++) {
+            const f = files[i];
+            setUploadStatus({
+              phase: "uploading",
+              current: i + 1,
+              total: files.length,
+              fileName: f.name,
+              failed: [...failed],
+            });
+            // Read fresh token each iteration — sliding-expiry refresh may rotate it mid-upload
+            const freshToken = useAuthStore.getState().token;
             try {
-              await caseDocumentosApi.upload(newCase.id, f, token || undefined);
+              await caseDocumentosApi.upload(newCase.id, f, freshToken || undefined);
               uploaded++;
-            } catch {
-              // continue uploading remaining files even if one fails
+            } catch (err) {
+              console.error("Upload failed:", f.name, err);
+              failed.push(f.name);
             }
           }
-          const msg = uploaded === files.length
-            ? `Caso creado con ${uploaded} documento${uploaded !== 1 ? "s" : ""}.`
-            : `Caso creado. ${uploaded}/${files.length} documentos subidos.`;
-          toast({ title: "Caso creado", description: msg });
+          if (failed.length > 0) {
+            toast({
+              title: `Caso creado · ${uploaded}/${files.length} documentos`,
+              description: `Falló: ${failed.join(", ")}. Puedes reintentarlos desde el detalle del caso.`,
+              variant: "destructive",
+            });
+          } else {
+            toast({
+              title: "Caso creado",
+              description: `${uploaded} documento${uploaded !== 1 ? "s" : ""} subido${uploaded !== 1 ? "s" : ""} correctamente.`,
+            });
+          }
         } else {
           toast({ title: "Caso creado", description: "El nuevo caso se registró correctamente." });
         }
@@ -159,6 +187,8 @@ function CasosContent() {
         description: err instanceof Error ? err.message : "No se pudo guardar el caso",
         variant: "destructive"
       });
+    } finally {
+      setUploadStatus(null);
     }
   };
 
@@ -208,7 +238,11 @@ function CasosContent() {
     }
   };
 
-  const closeModal = () => { setIsModalOpen(false); setEditingCase(null); };
+  const closeModal = () => {
+    if (uploadStatus) return; // bloquear cierre mientras sube documentos
+    setIsModalOpen(false);
+    setEditingCase(null);
+  };
 
   const handleModalKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Escape") { closeModal(); return; }
@@ -441,26 +475,61 @@ function CasosContent() {
             onKeyDown={handleModalKeyDown}
             className="relative bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto animate-fadeIn"
           >
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+            <div className="sticky top-0 bg-white z-10 flex items-center justify-between px-6 py-4 border-b border-gray-200">
               <h3 id="caso-modal-title" className="text-lg font-semibold text-gray-900">
                 {editingCase ? "Editar caso" : "Nuevo caso"}
               </h3>
               <button
                 onClick={closeModal}
+                disabled={!!uploadStatus}
                 aria-label="Cerrar"
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed"
               >
                 <X className="w-5 h-5" aria-hidden="true" />
               </button>
             </div>
 
             <div className="p-6">
-              <CaseForm
-                initialData={editingCase || undefined}
-                onSubmit={handleSubmit}
-                onCancel={closeModal}
-                isLoading={createCase.isPending || updateCase.isPending}
-              />
+              {uploadStatus ? (
+                <div className="py-10 text-center space-y-4">
+                  <div className="w-12 h-12 mx-auto border-4 border-minka-200 border-t-minka-500 rounded-full animate-spin" />
+                  {uploadStatus.phase === "creating" ? (
+                    <div>
+                      <p className="text-lg font-semibold text-gray-900">Creando caso…</p>
+                      <p className="text-sm text-gray-500 mt-1">Guardando información en el sistema</p>
+                    </div>
+                  ) : (
+                    <div>
+                      <p className="text-lg font-semibold text-gray-900">Subiendo documentos</p>
+                      <p className="text-sm text-gray-600 mt-1">
+                        Archivo {uploadStatus.current} de {uploadStatus.total}
+                      </p>
+                      <p className="text-xs text-gray-500 truncate max-w-sm mx-auto mt-2 font-mono">
+                        {uploadStatus.fileName}
+                      </p>
+                      <div className="w-full max-w-xs mx-auto bg-gray-200 rounded-full h-2 overflow-hidden mt-3">
+                        <div
+                          className="bg-minka-500 h-full transition-all duration-300"
+                          style={{ width: `${(uploadStatus.current / uploadStatus.total) * 100}%` }}
+                        />
+                      </div>
+                      {uploadStatus.failed.length > 0 && (
+                        <p className="text-xs text-red-600 mt-3">
+                          Falló: {uploadStatus.failed.join(", ")}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                  <p className="text-xs text-gray-400 pt-2">No cierres esta ventana</p>
+                </div>
+              ) : (
+                <CaseForm
+                  initialData={editingCase || undefined}
+                  onSubmit={handleSubmit}
+                  onCancel={closeModal}
+                  isLoading={createCase.isPending || updateCase.isPending}
+                />
+              )}
             </div>
           </div>
         </div>
