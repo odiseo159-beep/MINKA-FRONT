@@ -29,12 +29,30 @@ export default function ConfiguracionPage() {
     plan: "Pro",
   });
 
-  const [notificaciones, setNotificaciones] = useState({
+  const NOTIF_KEY = "minka_notificaciones";
+  const defaultNotif = {
     emailActualizaciones: true,
     whatsappRecordatorios: true,
     alertasUrgentes: true,
     resumenSemanal: false,
-  });
+  };
+  const [notificaciones, setNotificaciones] = useState(defaultNotif);
+
+  // Load notification prefs from localStorage on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(NOTIF_KEY);
+      if (stored) setNotificaciones({ ...defaultNotif, ...JSON.parse(stored) });
+    } catch {}
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Persist notification prefs whenever they change
+  useEffect(() => {
+    try {
+      localStorage.setItem(NOTIF_KEY, JSON.stringify(notificaciones));
+    } catch {}
+  }, [notificaciones]);
 
   useEffect(() => {
     const loadData = async () => {

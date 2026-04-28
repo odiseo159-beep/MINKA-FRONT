@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, Calendar, Clock, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Calculator, Calendar, Clock, AlertCircle, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react";
 import { calculadoraApi } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
 import type { CalcPlazoResponse, Feriado } from "@/types";
@@ -9,14 +9,19 @@ import type { CalcPlazoResponse, Feriado } from "@/types";
 type TipoCalculo = "habiles" | "calendario";
 
 const PLAZOS_COMUNES = [
-  { label: "3 días hábiles", dias: 3, tipo: "habiles" as TipoCalculo },
-  { label: "5 días hábiles", dias: 5, tipo: "habiles" as TipoCalculo },
-  { label: "10 días hábiles", dias: 10, tipo: "habiles" as TipoCalculo },
-  { label: "15 días hábiles", dias: 15, tipo: "habiles" as TipoCalculo },
-  { label: "30 días hábiles", dias: 30, tipo: "habiles" as TipoCalculo },
+  { label: "3 días hábiles",     dias: 3,  tipo: "habiles"   as TipoCalculo },
+  { label: "5 días hábiles",     dias: 5,  tipo: "habiles"   as TipoCalculo },
+  { label: "10 días hábiles",    dias: 10, tipo: "habiles"   as TipoCalculo },
+  { label: "15 días hábiles",    dias: 15, tipo: "habiles"   as TipoCalculo },
+  { label: "30 días hábiles",    dias: 30, tipo: "habiles"   as TipoCalculo },
   { label: "30 días calendario", dias: 30, tipo: "calendario" as TipoCalculo },
   { label: "60 días calendario", dias: 60, tipo: "calendario" as TipoCalculo },
   { label: "90 días calendario", dias: 90, tipo: "calendario" as TipoCalculo },
+];
+
+const MESES = [
+  "Enero","Febrero","Marzo","Abril","Mayo","Junio",
+  "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre",
 ];
 
 function formatDate(isoDate: string) {
@@ -25,25 +30,51 @@ function formatDate(isoDate: string) {
 }
 
 function getDayOfWeek(isoDate: string) {
-  const days = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
-  const d = new Date(isoDate + "T12:00:00");
-  return days[d.getDay()];
+  const days = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
+  return days[new Date(isoDate + "T12:00:00").getDay()];
 }
 
 export default function CalculadoraPage() {
   const { token } = useAuthStore();
+  const now = new Date();
 
-  const today = new Date().toISOString().split("T")[0];
-  const [fechaInicio, setFechaInicio] = useState(today);
-  const [dias, setDias] = useState<number>(10);
-  const [tipo, setTipo] = useState<TipoCalculo>("habiles");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [fechaInicio, setFechaInicio] = useState(now.toISOString().split("T")[0]);
+  const [dias, setDias]           = useState<number>(10);
+  const [tipo, setTipo]           = useState<TipoCalculo>("habiles");
+  const [loading, setLoading]     = useState(false);
+  const [error, setError]         = useState<string | null>(null);
   const [resultado, setResultado] = useState<CalcPlazoResponse | null>(null);
-  const [showFeriados, setShowFeriados] = useState(false);
-  const [feriados, setFeriados] = useState<Feriado[]>([]);
-  const [loadingFeriados, setLoadingFeriados] = useState(false);
-  const [feriadosVisible, setFeriadosVisible] = useState(false);
+  const [showFeriadosExcl, setShowFeriadosExcl] = useState(false);
+
+  // Feriados panel
+  const [allFeriados, setAllFeriados]   = useState<Feriado[]>([]);
+  const [feriadosMes, setFeriadosMes]   = useState<Feriado[]>([]);
+  const [viewYear, setViewYear]         = useState(now.getFullYear());
+  const [viewMonth, setViewMonth]       = useState(now.getMonth()); // 0-based
+
+  // Load all feriados on mount
+  useEffect(() => {
+    calculadoraApi.getFeriados(token ?? undefined)
+      .then((res) => setAllFeriados(res.feriados))
+      .catch(() => {});
+  }, [token]);
+
+  // Filter feriados when month/year changes
+  useEffect(() => {
+    const mm = String(viewMonth + 1).padStart(2, "0");
+    const prefix = `${viewYear}-${mm}`;
+    setFeriadosMes(allFeriados.filter((f) => f.fecha.startsWith(prefix)));
+  }, [allFeriados, viewMonth, viewYear]);
+
+  function prevMonth() {
+    if (viewMonth === 0) { setViewMonth(11); setViewYear((y) => y - 1); }
+    else setViewMonth((m) => m - 1);
+  }
+
+  function nextMonth() {
+    if (viewMonth === 11) { setViewMonth(0); setViewYear((y) => y + 1); }
+    else setViewMonth((m) => m + 1);
+  }
 
   async function handleCalcular() {
     if (!fechaInicio || !dias || dias < 1) return;
@@ -60,23 +91,6 @@ export default function CalculadoraPage() {
       setError(e.message || "Error al calcular el plazo");
     } finally {
       setLoading(false);
-    }
-  }
-
-  async function handleVerFeriados() {
-    if (feriadosVisible) {
-      setFeriadosVisible(false);
-      return;
-    }
-    setLoadingFeriados(true);
-    try {
-      const res = await calculadoraApi.getFeriados(token ?? undefined);
-      setFeriados(res.feriados);
-      setFeriadosVisible(true);
-    } catch {
-      // silencioso
-    } finally {
-      setLoadingFeriados(false);
     }
   }
 
@@ -187,7 +201,7 @@ export default function CalculadoraPage() {
                   <p className="text-lg font-bold text-gray-900">{formatDate(resultado.fecha_inicio)}</p>
                   <p className="text-xs text-gray-400 capitalize">{getDayOfWeek(resultado.fecha_inicio)}</p>
                 </div>
-                <div className="bg-white rounded-lg p-4 border border-gray-900/20 ring-2 ring-gray-900/20">
+                <div className="bg-white rounded-lg p-4 border border-minka-200 ring-2 ring-minka-100">
                   <p className="text-xs text-gray-500 mb-1">Fecha de vencimiento</p>
                   <p className="text-lg font-bold text-minka-600">{formatDate(resultado.fecha_vencimiento)}</p>
                   <p className="text-xs text-gray-400 capitalize">{getDayOfWeek(resultado.fecha_vencimiento)}</p>
@@ -205,18 +219,18 @@ export default function CalculadoraPage() {
                 </div>
               </div>
 
-              {resultado.feriados_excluidos.length > 0 && (
+              {resultado.feriados_excluidos?.length > 0 && (
                 <div>
                   <button
-                    onClick={() => setShowFeriados(!showFeriados)}
+                    onClick={() => setShowFeriadosExcl(!showFeriadosExcl)}
                     className="flex items-center gap-1 text-xs text-minka-600 hover:underline"
                   >
-                    {showFeriados ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                    {showFeriadosExcl ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                     {resultado.feriados_excluidos.length} feriado
                     {resultado.feriados_excluidos.length !== 1 ? "s" : ""} excluido
                     {resultado.feriados_excluidos.length !== 1 ? "s" : ""}
                   </button>
-                  {showFeriados && (
+                  {showFeriadosExcl && (
                     <ul className="mt-2 space-y-1">
                       {resultado.feriados_excluidos.map((f) => (
                         <li key={f.fecha} className="text-xs text-gray-600 flex gap-2">
@@ -250,39 +264,55 @@ export default function CalculadoraPage() {
             </div>
           </div>
 
-          {/* Feriados del año */}
+          {/* Feriados por mes */}
           <div className="bg-white rounded-xl border border-gray-200 p-5">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-gray-700">Feriados Perú</h3>
+            {/* Navegación de mes */}
+            <div className="flex items-center justify-between mb-4">
               <button
-                onClick={handleVerFeriados}
-                disabled={loadingFeriados}
-                className="text-xs text-minka-600 hover:underline disabled:opacity-50"
+                onClick={prevMonth}
+                className="p-1 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors"
+                aria-label="Mes anterior"
               >
-                {loadingFeriados ? "Cargando..." : feriadosVisible ? "Ocultar" : "Ver todos"}
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <h3 className="text-sm font-semibold text-gray-700">
+                {MESES[viewMonth]} {viewYear}
+              </h3>
+              <button
+                onClick={nextMonth}
+                className="p-1 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors"
+                aria-label="Mes siguiente"
+              >
+                <ChevronRight className="w-4 h-4" />
               </button>
             </div>
-            {feriadosVisible && (
-              <div className="space-y-1.5 max-h-64 overflow-y-auto">
-                {feriados
-                  .filter((f) => f.fecha >= today)
-                  .slice(0, 20)
-                  .map((f) => (
-                    <div key={f.fecha} className="flex gap-2 text-xs">
-                      <span className="font-mono text-minka-600 shrink-0">{formatDate(f.fecha)}</span>
-                      <span className="text-gray-600">{f.nombre}</span>
-                    </div>
-                  ))}
-                {feriados.filter((f) => f.fecha >= today).length === 0 && (
-                  <p className="text-xs text-gray-400">No hay feriados próximos.</p>
-                )}
+
+            {allFeriados.length === 0 ? (
+              <div className="space-y-2">
+                {[1, 2].map((i) => (
+                  <div key={i} className="h-4 bg-gray-100 rounded animate-pulse" />
+                ))}
               </div>
-            )}
-            {!feriadosVisible && (
-              <p className="text-xs text-gray-400">
-                Lista de feriados oficiales 2024–2027.
+            ) : feriadosMes.length === 0 ? (
+              <p className="text-xs text-gray-400 text-center py-3">
+                Sin feriados en {MESES[viewMonth].toLowerCase()}.
               </p>
+            ) : (
+              <ul className="space-y-2">
+                {feriadosMes.map((f) => (
+                  <li key={f.fecha} className="flex gap-2 items-start text-xs">
+                    <span className="font-mono text-minka-600 shrink-0 mt-0.5">
+                      {formatDate(f.fecha)}
+                    </span>
+                    <span className="text-gray-700 leading-tight">{f.nombre}</span>
+                  </li>
+                ))}
+              </ul>
             )}
+
+            <p className="text-[10px] text-gray-300 mt-3 text-center">
+              Feriados oficiales Perú 2024–2027
+            </p>
           </div>
         </div>
       </div>
