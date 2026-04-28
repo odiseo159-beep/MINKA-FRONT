@@ -44,7 +44,7 @@ export default function CaseDetailPage() {
 
   const [aiSeedQuery, setAiSeedQuery] = useState<string | undefined>(undefined);
   const chatSectionRef = useRef<HTMLDivElement>(null);
-  const [activeTab, setActiveTab] = useState<"detalle" | "agente">("detalle");
+  const [activeTab, setActiveTab] = useState<"detalle" | "documentos" | "agente">("detalle");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const triggerAiAction = (query: string) => {
@@ -83,6 +83,23 @@ export default function CaseDetailPage() {
       toast({
         title: "Error",
         description: err instanceof Error ? err.message : "No se pudo actualizar el caso",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleStatusChange = async (nuevoEstado: string) => {
+    if (!caso || nuevoEstado === caso.estado) return;
+    try {
+      await updateCase.mutateAsync({ id: caso.id, data: { estado: nuevoEstado } });
+      toast({
+        title: "Estado actualizado",
+        description: `Cambiado a "${STATUS_LABELS[nuevoEstado] || nuevoEstado}". ¿Notificar al cliente?`,
+      });
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: err instanceof Error ? err.message : "No se pudo cambiar el estado",
         variant: "destructive",
       });
     }
@@ -149,7 +166,7 @@ export default function CaseDetailPage() {
   return (
     <div className="animate-fadeIn">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-start justify-between mb-6 gap-4 flex-wrap">
         <div className="flex items-center gap-4">
           <Link
             href="/dashboard/casos"
@@ -161,6 +178,34 @@ export default function CaseDetailPage() {
           <div>
             <p className="eyebrow">{caso.expediente ? `Expediente · ${caso.expediente}` : "Detalle del caso"}</p>
             <h1 className="text-2xl font-bold text-gray-900">{caso.nombre_cliente}</h1>
+            <div className="mt-2 flex items-center gap-2">
+              <label htmlFor="estado-quick" className="text-xs text-gray-500">Estado:</label>
+              <div className="relative">
+                <select
+                  id="estado-quick"
+                  value={caso.estado}
+                  onChange={(e) => handleStatusChange(e.target.value)}
+                  disabled={updateCase.isPending}
+                  className={`appearance-none pr-8 pl-3 py-1.5 text-sm font-medium rounded-full border-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-minka-500 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-wait ${STATUS_COLORS[caso.estado]}`}
+                >
+                  {Object.entries(STATUS_LABELS).map(([value, label]) => (
+                    <option key={value} value={value} className="bg-white text-gray-900">
+                      {label}
+                    </option>
+                  ))}
+                </select>
+                <span
+                  className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-xs"
+                  aria-hidden="true"
+                >
+                  {updateCase.isPending ? (
+                    <span className="inline-block w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    "▾"
+                  )}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -224,6 +269,7 @@ export default function CaseDetailPage() {
           <div className="flex gap-1 border-b border-gray-200">
             {([
               { id: "detalle", label: "Detalle" },
+              { id: "documentos", label: `📎 Documentos${(documentosNuevos?.length ?? 0) > 0 ? ` (${documentosNuevos!.length})` : ""}` },
               { id: "agente", label: "⚖️ Agente Legal" },
             ] as const).map((tab) => (
               <button
@@ -239,6 +285,13 @@ export default function CaseDetailPage() {
               </button>
             ))}
           </div>
+
+          {activeTab === "documentos" && (
+            <DocumentosPanel
+              casoId={caso.id}
+              legacyDoc={caso.documento_url && caso.documento_nombre ? { nombre: caso.documento_nombre } : null}
+            />
+          )}
 
           {activeTab === "agente" && (
             <div className="p-4">
@@ -256,9 +309,6 @@ export default function CaseDetailPage() {
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-semibold text-gray-900">Información del caso</h2>
-              <span className={`px-3 py-1.5 text-sm font-medium rounded-full ${STATUS_COLORS[caso.estado]}`}>
-                {STATUS_LABELS[caso.estado]}
-              </span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -291,12 +341,6 @@ export default function CaseDetailPage() {
               </div>
             </div>
           </div>
-
-          {/* Documentos del caso (multi-doc) */}
-          <DocumentosPanel
-            casoId={caso.id}
-            legacyDoc={caso.documento_url && caso.documento_nombre ? { nombre: caso.documento_nombre } : null}
-          />
 
           {/* Documents */}
           {caso.documentos_pendientes && (
