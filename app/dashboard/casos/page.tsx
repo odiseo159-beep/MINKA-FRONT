@@ -473,7 +473,7 @@ function CasosContent() {
             aria-modal="true"
             aria-labelledby="caso-modal-title"
             onKeyDown={handleModalKeyDown}
-            className="relative bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto animate-fadeIn"
+            className="relative bg-white rounded-xl shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto animate-fadeIn"
           >
             <div className="sticky top-0 bg-white z-10 flex items-center justify-between px-6 py-4 border-b border-gray-200">
               <h3 id="caso-modal-title" className="text-lg font-semibold text-gray-900">

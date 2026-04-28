@@ -431,7 +431,7 @@ export default function CaseDetailPage() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="edit-caso-title"
-            className="relative bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto"
+            className="relative bg-white rounded-xl shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto"
           >
             <div className="sticky top-0 bg-white z-10 flex items-center justify-between px-6 py-4 border-b border-gray-200">
               <h3 id="edit-caso-title" className="text-lg font-semibold text-gray-900">
