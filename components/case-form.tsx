@@ -438,8 +438,8 @@ export function CaseForm({ initialData, onSubmit, onCancel, isLoading }: CaseFor
         <textarea
           id="documentos_pendientes"
           {...register("documentos_pendientes")}
-          rows={2}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-minka-500 focus:border-minka-500 outline-none resize-none"
+          rows={8}
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-minka-500 focus:border-minka-500 outline-none resize-y min-h-[8rem]"
           placeholder="Ej: DNI del testigo, Contrato original"
         />
       </div>
@@ -453,8 +453,8 @@ export function CaseForm({ initialData, onSubmit, onCancel, isLoading }: CaseFor
         <textarea
           id="notas"
           {...register("notas")}
-          rows={3}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-minka-500 focus:border-minka-500 outline-none resize-none"
+          rows={5}
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-minka-500 focus:border-minka-500 outline-none resize-y min-h-[6rem]"
           placeholder="Notas privadas para el abogado..."
         />
       </div>
