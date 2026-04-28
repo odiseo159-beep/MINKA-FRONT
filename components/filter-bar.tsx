@@ -88,6 +88,7 @@ export function FilterBar({ filters, onChange, onClearAll, onNewCase }: FilterBa
         <div className="flex items-center gap-2">
           <input
             type="date"
+            lang="es-PE"
             value={filters.dateFrom}
             onChange={(e) => update({ dateFrom: e.target.value })}
             aria-label="Fecha desde"
@@ -96,6 +97,7 @@ export function FilterBar({ filters, onChange, onClearAll, onNewCase }: FilterBa
           <span className="text-gray-400 text-sm" aria-hidden="true">—</span>
           <input
             type="date"
+            lang="es-PE"
             value={filters.dateTo}
             onChange={(e) => update({ dateTo: e.target.value })}
             aria-label="Fecha hasta"

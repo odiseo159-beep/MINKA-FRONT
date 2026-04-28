@@ -117,6 +117,23 @@ export default function CaseDetailPage() {
     }
   };
 
+  const handleProximaFechaChange = async (nuevaFecha: string) => {
+    if (!caso || nuevaFecha === (caso.proxima_fecha || "")) return;
+    try {
+      await updateCase.mutateAsync({ id: caso.id, data: { proxima_fecha: nuevaFecha } });
+      toast({
+        title: "Próxima fecha actualizada",
+        description: nuevaFecha ? formatDate(nuevaFecha) : "Fecha eliminada",
+      });
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: err instanceof Error ? err.message : "No se pudo cambiar la fecha",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleDelete = async () => {
     if (!caso) return;
     const confirmacion = confirm(
@@ -190,32 +207,46 @@ export default function CaseDetailPage() {
           <div>
             <p className="eyebrow">{caso.expediente ? `Expediente · ${caso.expediente}` : "Detalle del caso"}</p>
             <h1 className="text-2xl font-bold text-gray-900">{caso.nombre_cliente}</h1>
-            <div className="mt-2 flex items-center gap-2">
-              <label htmlFor="estado-quick" className="text-xs text-gray-500">Estado:</label>
-              <div className="relative">
-                <select
-                  id="estado-quick"
-                  value={caso.estado}
-                  onChange={(e) => handleStatusChange(e.target.value)}
+            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2">
+              <div className="flex items-center gap-2">
+                <label htmlFor="estado-quick" className="text-xs text-gray-500">Estado:</label>
+                <div className="relative">
+                  <select
+                    id="estado-quick"
+                    value={caso.estado}
+                    onChange={(e) => handleStatusChange(e.target.value)}
+                    disabled={updateCase.isPending}
+                    className={`appearance-none pr-8 pl-3 py-1.5 text-sm font-medium rounded-full border-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-minka-500 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-wait ${STATUS_COLORS[caso.estado]}`}
+                  >
+                    {Object.entries(STATUS_LABELS).map(([value, label]) => (
+                      <option key={value} value={value} className="bg-white text-gray-900">
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                  <span
+                    className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-xs"
+                    aria-hidden="true"
+                  >
+                    {updateCase.isPending ? (
+                      <span className="inline-block w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      "▾"
+                    )}
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <label htmlFor="fecha-quick" className="text-xs text-gray-500">Próxima fecha:</label>
+                <input
+                  id="fecha-quick"
+                  type="date"
+                  lang="es-PE"
+                  value={caso.proxima_fecha || ""}
+                  onChange={(e) => handleProximaFechaChange(e.target.value)}
                   disabled={updateCase.isPending}
-                  className={`appearance-none pr-8 pl-3 py-1.5 text-sm font-medium rounded-full border-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-minka-500 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-wait ${STATUS_COLORS[caso.estado]}`}
-                >
-                  {Object.entries(STATUS_LABELS).map(([value, label]) => (
-                    <option key={value} value={value} className="bg-white text-gray-900">
-                      {label}
-                    </option>
-                  ))}
-                </select>
-                <span
-                  className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-xs"
-                  aria-hidden="true"
-                >
-                  {updateCase.isPending ? (
-                    <span className="inline-block w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    "▾"
-                  )}
-                </span>
+                  className={`px-2 py-1 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-minka-500 focus:border-minka-500 outline-none disabled:opacity-50 ${getDateUrgencyClass(caso.proxima_fecha)}`}
+                />
               </div>
             </div>
           </div>

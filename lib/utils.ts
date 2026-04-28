@@ -3,10 +3,17 @@ import { twMerge } from "tailwind-merge";
 import { format, formatDistanceToNow, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 
-// Parse date string that may or may not have ISO T separator
+// Parse date string que puede o no tener separador "T".
+// SQLite CURRENT_TIMESTAMP devuelve "2026-03-22 22:43:21" en UTC sin sufijo —
+// si parseISO lo recibe sin TZ lo interpreta como local, descalibrando 5h en
+// Perú (UTC-5). Forzamos "Z" SOLO cuando hay componente de tiempo; las fechas
+// "yyyy-mm-dd" son date-only y deben parsearse como medianoche local.
 function parseDate(dateStr: string): Date {
-  // Handle "2026-03-22 22:43:21" format (backend) by replacing space with T
-  const normalized = dateStr.includes("T") ? dateStr : dateStr.replace(" ", "T");
+  const hasTime = dateStr.includes("T") || / \d{2}:/.test(dateStr);
+  if (!hasTime) return parseISO(dateStr);
+  let normalized = dateStr.includes("T") ? dateStr : dateStr.replace(" ", "T");
+  const hasTz = /[Zz]$|[+-]\d{2}:?\d{2}$/.test(normalized);
+  if (!hasTz) normalized += "Z";
   return parseISO(normalized);
 }
 

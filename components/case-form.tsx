@@ -412,6 +412,7 @@ export function CaseForm({ initialData, onSubmit, onCancel, isLoading }: CaseFor
             id="proxima_fecha"
             {...register("proxima_fecha")}
             type="date"
+            lang="es-PE"
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-minka-500 focus:border-minka-500 outline-none"
           />
         </div>
