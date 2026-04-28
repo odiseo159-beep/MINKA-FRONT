@@ -229,6 +229,16 @@ export const abogadosApi = {
 
   disconnectWhapi: async (id: number, token?: string) =>
     fetchAPI<{ ok: boolean }>(`/api/abogados/${id}/whapi`, { method: "DELETE", token }),
+
+  refreshWhapi: async (id: number, token?: string) =>
+    fetchAPI<{
+      ok: boolean;
+      abogado: Record<string, any>;
+      channel_info: WhapiVerifyResponse;
+      phone_anterior: string | null;
+      phone_actualizado: string | null;
+      cambio_detectado: boolean;
+    }>(`/api/abogados/${id}/whapi/refresh`, { method: "POST", token }),
 };
 
 // ============================================

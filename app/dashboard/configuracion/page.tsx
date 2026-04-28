@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Settings, User, Bell, Building2, Save, Check, MessageCircle, Copy, AlertCircle, CheckCircle2, Trash2, Eye, EyeOff } from "lucide-react";
+import { Settings, User, Bell, Building2, Save, Check, MessageCircle, Copy, AlertCircle, CheckCircle2, Trash2, Eye, EyeOff, RefreshCw } from "lucide-react";
 import { useAuthStore } from "@/lib/auth-store";
 import { abogadosApi, estudiosApi, type WhapiSaveResponse } from "@/lib/api";
 
@@ -156,6 +156,25 @@ export default function ConfiguracionPage() {
       setWhapiState("idle");
     } catch (err) {
       setWhapiError(err instanceof Error ? err.message : "No se pudo conectar el canal");
+      setWhapiState("error");
+    }
+  };
+
+  const handleRefreshWhapi = async () => {
+    if (!abogadoId) return;
+    setWhapiState("verifying");
+    setWhapiError("");
+    try {
+      const res = await abogadosApi.refreshWhapi(abogadoId, token || undefined);
+      setWhapiSavedNumber(res.phone_actualizado || "");
+      setWhapiSavedChannelId(res.channel_info.channel_id);
+      if (res.cambio_detectado) {
+        setWhapiError(""); // limpiar errores
+        // Mostrar toast simple en errorbox como confirmación verde
+      }
+      setWhapiState("idle");
+    } catch (err) {
+      setWhapiError(err instanceof Error ? err.message : "No se pudo verificar el canal");
       setWhapiState("error");
     }
   };
@@ -351,13 +370,40 @@ export default function ConfiguracionPage() {
                   </div>
                 )}
 
-                <button
-                  onClick={handleDisconnectWhapi}
-                  className="inline-flex items-center gap-1.5 text-sm text-red-600 hover:text-red-800"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  Desconectar canal
-                </button>
+                <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 text-xs text-blue-900 space-y-1.5">
+                  <p className="font-medium">¿Vas a cambiar el número vinculado al canal?</p>
+                  <p>
+                    1) Re-pairea el canal en whapi.cloud (logout + nuevo QR con el otro WhatsApp). 2) Vuelve aquí y haz clic en <strong>"Verificar y actualizar"</strong> abajo. El token y la URL de webhook NO cambian.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={handleRefreshWhapi}
+                    disabled={whapiState === "verifying"}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    {whapiState === "verifying" ? (
+                      <>
+                        <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Verificando…
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="w-3.5 h-3.5" />
+                        Verificar y actualizar número
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={handleDisconnectWhapi}
+                    className="inline-flex items-center gap-1.5 text-sm text-red-600 hover:text-red-800"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Desconectar canal
+                  </button>
+                </div>
               </>
             ) : (
               // ── Estado sin conectar ──
