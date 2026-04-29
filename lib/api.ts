@@ -206,6 +206,19 @@ export interface WhapiSaveResponse {
   instrucciones: string;
 }
 
+export interface WhapiStatusResponse {
+  enabled: boolean;
+  mensaje: string | null;
+}
+
+/** Endpoint público (sin auth) que reporta si la integración Whapi está
+ *  habilitada en el backend. Si enabled=false, el frontend deshabilita el
+ *  formulario y muestra el banner con el mensaje de mantenimiento. */
+export const whapiStatusApi = {
+  get: async (): Promise<WhapiStatusResponse> =>
+    fetchAPI<WhapiStatusResponse>("/api/whapi/status", {}),
+};
+
 export const abogadosApi = {
   getAll: async (token?: string) => fetchAPI<any[]>("/api/abogados", { token }),
   create: async (data: Record<string, any>, token?: string) =>

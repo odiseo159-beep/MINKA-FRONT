@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Settings, User, Bell, Building2, Save, Check, MessageCircle, Copy, AlertCircle, CheckCircle2, Trash2, Eye, EyeOff, RefreshCw } from "lucide-react";
 import { useAuthStore } from "@/lib/auth-store";
-import { abogadosApi, estudiosApi, type WhapiSaveResponse } from "@/lib/api";
+import { abogadosApi, estudiosApi, whapiStatusApi, type WhapiSaveResponse, type WhapiStatusResponse } from "@/lib/api";
 
 export default function ConfiguracionPage() {
   const user = useAuthStore((s) => s.user);
@@ -31,6 +31,9 @@ export default function ConfiguracionPage() {
   const [whapiState, setWhapiState] = useState<"idle" | "verifying" | "saving" | "error">("idle");
   const [whapiError, setWhapiError] = useState("");
   const [webhookCopied, setWebhookCopied] = useState(false);
+  // Feature flag: si el backend reporta enabled=false, deshabilitar todo el form
+  // Whapi y mostrar banner. Default a enabled para no romper UX si la query falla.
+  const [whapiStatus, setWhapiStatus] = useState<WhapiStatusResponse>({ enabled: true, mensaje: null });
 
   const [estudio, setEstudio] = useState({
     nombre: "",
@@ -55,6 +58,16 @@ export default function ConfiguracionPage() {
       if (stored) setNotificaciones({ ...defaultNotif, ...JSON.parse(stored) });
     } catch {}
   // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Cargar el estado del feature flag de Whapi al montar. Si está off, ocultamos
+  // el form de configuración. Falla silenciosa: si la query falla, asumimos
+  // enabled=true (default conservador para no bloquear UX cuando el endpoint
+  // todavía no está deployado).
+  useEffect(() => {
+    whapiStatusApi.get()
+      .then(setWhapiStatus)
+      .catch(() => setWhapiStatus({ enabled: true, mensaje: null }));
   }, []);
 
   // Persist notification prefs whenever they change
@@ -337,7 +350,12 @@ export default function ConfiguracionPage() {
           <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
             <MessageCircle className="w-4 h-4 text-gray-500" />
             <h2 className="font-semibold text-gray-900">Integración WhatsApp</h2>
-            {whapiSavedChannelId && (
+            {!whapiStatus.enabled ? (
+              <span className="ml-auto inline-flex items-center gap-1 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5">
+                <AlertCircle className="w-3 h-3" />
+                En mantenimiento
+              </span>
+            ) : whapiSavedChannelId && (
               <span className="ml-auto inline-flex items-center gap-1 text-xs text-green-700 bg-green-50 border border-green-200 rounded-full px-2 py-0.5">
                 <CheckCircle2 className="w-3 h-3" />
                 Conectado
@@ -346,7 +364,46 @@ export default function ConfiguracionPage() {
           </div>
 
           <div className="p-5 space-y-4">
-            {whapiSavedChannelId ? (
+            {!whapiStatus.enabled && (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-900">
+                <p className="font-medium mb-1 flex items-center gap-1.5">
+                  <AlertCircle className="w-4 h-4" />
+                  Integración temporalmente deshabilitada
+                </p>
+                <p className="text-xs text-amber-800">
+                  {whapiStatus.mensaje ||
+                    "Estamos refactorizando esta parte de la plataforma. La conexión y verificación de canales WhatsApp está pausada. Puedes desconectar canales viejos si necesitas, pero no se podrán configurar nuevos hasta que vuelva a habilitarse."}
+                </p>
+              </div>
+            )}
+            {!whapiStatus.enabled ? (
+              // Modo mantenimiento: solo permitimos desconectar canales viejos
+              whapiSavedChannelId ? (
+                <div className="space-y-3">
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm space-y-1.5">
+                    <div className="flex justify-between gap-3">
+                      <span className="text-gray-500">Canal actual:</span>
+                      <span className="font-mono text-gray-800">{whapiSavedChannelId}</span>
+                    </div>
+                    <div className="flex justify-between gap-3">
+                      <span className="text-gray-500">Número:</span>
+                      <span className="font-mono text-gray-800">{whapiSavedNumber || "—"}</span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleDisconnectWhapi}
+                    className="inline-flex items-center gap-1.5 text-sm text-red-600 hover:text-red-800"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Desconectar canal
+                  </button>
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500">
+                  No hay canal configurado. Cuando vuelva a habilitarse podrás conectar uno.
+                </p>
+              )
+            ) : whapiSavedChannelId ? (
               // ── Estado conectado ──
               <>
                 <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm space-y-1.5">
