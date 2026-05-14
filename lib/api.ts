@@ -219,6 +219,63 @@ export const whapiStatusApi = {
     fetchAPI<WhapiStatusResponse>("/api/whapi/status", {}),
 };
 
+// ============================================
+// Empresa — WhatsApp público
+// ============================================
+export interface EmpresaWhatsappResponse {
+  numero: string;
+  numero_display: string | null;
+  configurado: boolean;
+}
+
+export const empresaApi = {
+  /** Número público de WhatsApp de la empresa al que los abogados mandan
+   *  "registrar CODIGO" para vincular su número con su cuenta. */
+  getWhatsapp: async (): Promise<EmpresaWhatsappResponse> =>
+    fetchAPI<EmpresaWhatsappResponse>("/api/empresa/whatsapp", {}),
+};
+
+// ============================================
+// Vinculación WhatsApp del abogado (modelo single-channel)
+// ============================================
+export interface WhatsappCodigoResponse {
+  codigo: string;
+  expira_at: string;
+  ttl_minutos: number;
+  instrucciones: string;
+  empresa_numero: string;
+}
+
+export interface WhatsappEstadoResponse {
+  verificado: boolean;
+  whatsapp_numero: string | null;
+  whatsapp_numero_display: string;
+  codigo_pendiente: boolean;
+  codigo_expira_at: string | null;
+}
+
+export const whatsappAbogadoApi = {
+  /** Genera un código de 10min. El abogado debe mandar "registrar CODIGO"
+   *  desde su WhatsApp al número de la empresa para vincular. */
+  generarCodigo: async (abogadoId: number, token?: string): Promise<WhatsappCodigoResponse> =>
+    fetchAPI<WhatsappCodigoResponse>(`/api/abogados/${abogadoId}/whatsapp/codigo`, {
+      method: "POST",
+      token,
+    }),
+
+  /** Estado del vínculo. El frontend lo polling-ea cada 3-5s después de
+   *  pedir un código para detectar cuando el abogado completó la verificación. */
+  getEstado: async (abogadoId: number, token?: string): Promise<WhatsappEstadoResponse> =>
+    fetchAPI<WhatsappEstadoResponse>(`/api/abogados/${abogadoId}/whatsapp/estado`, { token }),
+
+  /** Desvincula el WhatsApp del abogado. El bot dejará de reconocerlo. */
+  desvincular: async (abogadoId: number, token?: string): Promise<{ ok: boolean; mensaje: string }> =>
+    fetchAPI<{ ok: boolean; mensaje: string }>(`/api/abogados/${abogadoId}/whatsapp`, {
+      method: "DELETE",
+      token,
+    }),
+};
+
 export const abogadosApi = {
   getAll: async (token?: string) => fetchAPI<any[]>("/api/abogados", { token }),
   create: async (data: Record<string, any>, token?: string) =>

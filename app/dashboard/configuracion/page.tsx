@@ -1,9 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Settings, User, Bell, Building2, Save, Check, MessageCircle, Copy, AlertCircle, CheckCircle2, Trash2, Eye, EyeOff, RefreshCw } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Settings, User, Bell, Building2, Save, Check, MessageCircle, Copy, AlertCircle, CheckCircle2, Trash2, Smartphone, Loader2 } from "lucide-react";
 import { useAuthStore } from "@/lib/auth-store";
-import { abogadosApi, estudiosApi, whapiStatusApi, type WhapiSaveResponse, type WhapiStatusResponse } from "@/lib/api";
+import {
+  abogadosApi,
+  estudiosApi,
+  whapiStatusApi,
+  empresaApi,
+  whatsappAbogadoApi,
+  type WhapiStatusResponse,
+  type EmpresaWhatsappResponse,
+  type WhatsappCodigoResponse,
+  type WhatsappEstadoResponse,
+} from "@/lib/api";
 
 export default function ConfiguracionPage() {
   const user = useAuthStore((s) => s.user);
@@ -22,17 +32,20 @@ export default function ConfiguracionPage() {
     colegiatura: "",
   });
 
-  // ─── Whapi (WhatsApp) integration state ───
-  const [whapiToken, setWhapiToken] = useState("");
-  const [whapiTokenVisible, setWhapiTokenVisible] = useState(false);
-  const [whapiSavedInfo, setWhapiSavedInfo] = useState<WhapiSaveResponse | null>(null);
-  const [whapiSavedNumber, setWhapiSavedNumber] = useState("");
-  const [whapiSavedChannelId, setWhapiSavedChannelId] = useState("");
-  const [whapiState, setWhapiState] = useState<"idle" | "verifying" | "saving" | "error">("idle");
-  const [whapiError, setWhapiError] = useState("");
-  const [webhookCopied, setWebhookCopied] = useState(false);
-  // Feature flag: si el backend reporta enabled=false, deshabilitar todo el form
-  // Whapi y mostrar banner. Default a enabled para no romper UX si la query falla.
+  // ─── WhatsApp integration state (modelo single-channel) ───
+  //
+  // Flujo: el abogado pide "Vincular WhatsApp" → backend genera código → UI
+  // muestra el código + el número de la empresa para que mande "registrar X"
+  // desde su WhatsApp → polling al endpoint /estado detecta cuando se vincula.
+  const [waEmpresa, setWaEmpresa] = useState<EmpresaWhatsappResponse | null>(null);
+  const [waEstado, setWaEstado] = useState<WhatsappEstadoResponse | null>(null);
+  const [waCodigo, setWaCodigo] = useState<WhatsappCodigoResponse | null>(null);
+  const [waLoading, setWaLoading] = useState(false);
+  const [waError, setWaError] = useState("");
+  const [waCodigoCopiado, setWaCodigoCopiado] = useState(false);
+  // ref para el timer del polling, para poder limpiarlo en unmount
+  const waPollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Feature flag de Whapi (el backend puede tener el bot apagado por mantenimiento)
   const [whapiStatus, setWhapiStatus] = useState<WhapiStatusResponse>({ enabled: true, mensaje: null });
 
   const [estudio, setEstudio] = useState({
@@ -80,10 +93,12 @@ export default function ConfiguracionPage() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [abogados, estudios] = await Promise.all([
+        const [abogados, estudios, empresa] = await Promise.all([
           abogadosApi.getAll(token || undefined),
           estudiosApi.getAll(token || undefined),
+          empresaApi.getWhatsapp().catch(() => null), // si falla, queda null
         ]);
+        if (empresa) setWaEmpresa(empresa);
         if (abogados.length > 0) {
           // Backend filtra por email del usuario autenticado, así que [0] es
           // el abogado del usuario actual (no de otra cuenta).
@@ -95,9 +110,12 @@ export default function ConfiguracionPage() {
             telefono: a.telefono || "",
             colegiatura: a.colegiatura || "",
           });
-          if (a.whapi_channel_id) {
-            setWhapiSavedChannelId(a.whapi_channel_id);
-            setWhapiSavedNumber(a.whatsapp_numero || "");
+          // Cargar estado WhatsApp del abogado
+          try {
+            const estado = await whatsappAbogadoApi.getEstado(a.id, token || undefined);
+            setWaEstado(estado);
+          } catch {
+            // ignore: el backend puede no estar deployado aún
           }
         } else {
           // Cuenta nueva sin abogado todavía: pre-llenar nombre/email del JWT
@@ -127,6 +145,45 @@ export default function ConfiguracionPage() {
     loadData();
   }, []); // only on mount
 
+  // Polling del estado WhatsApp cuando hay un código pendiente: cada 4s
+  // chequeamos si el abogado completó la verificación desde su WhatsApp.
+  // Cuando se vincula (verificado=true), detenemos el polling y limpiamos
+  // el código local.
+  useEffect(() => {
+    if (!abogadoId || !waCodigo) {
+      // No hay código pendiente — limpiar timer si quedó
+      if (waPollingRef.current) {
+        clearInterval(waPollingRef.current);
+        waPollingRef.current = null;
+      }
+      return;
+    }
+    const tick = async () => {
+      try {
+        const estado = await whatsappAbogadoApi.getEstado(abogadoId, token || undefined);
+        setWaEstado(estado);
+        if (estado.verificado) {
+          // Listo: vinculado. Limpiar el código pendiente.
+          setWaCodigo(null);
+          if (waPollingRef.current) {
+            clearInterval(waPollingRef.current);
+            waPollingRef.current = null;
+          }
+        }
+      } catch {
+        // network blip — el próximo tick reintenta
+      }
+    };
+    waPollingRef.current = setInterval(tick, 4000);
+    return () => {
+      if (waPollingRef.current) {
+        clearInterval(waPollingRef.current);
+        waPollingRef.current = null;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [abogadoId, waCodigo?.codigo]);
+
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -155,71 +212,51 @@ export default function ConfiguracionPage() {
     }
   };
 
-  // ─── Whapi handlers ───
-  const handleConnectWhapi = async () => {
+  // ─── Handlers de vinculación WhatsApp ───
+  const handleVincularWhatsapp = async () => {
     if (!abogadoId) {
-      setWhapiError("Primero guarda tu perfil para crear el registro de abogado.");
-      setWhapiState("error");
+      setWaError("Primero guarda tu perfil para crear tu registro de abogado.");
       return;
     }
-    if (!whapiToken.trim()) {
-      setWhapiError("Pega el token del canal Whapi.");
-      setWhapiState("error");
-      return;
-    }
-    setWhapiState("saving");
-    setWhapiError("");
+    setWaLoading(true);
+    setWaError("");
     try {
-      const res = await abogadosApi.saveWhapi(abogadoId, whapiToken.trim(), undefined, token || undefined);
-      setWhapiSavedInfo(res);
-      setWhapiSavedChannelId(res.channel_info.channel_id);
-      setWhapiSavedNumber(res.channel_info.phone || "");
-      setWhapiToken("");
-      setWhapiState("idle");
+      const res = await whatsappAbogadoApi.generarCodigo(abogadoId, token || undefined);
+      setWaCodigo(res);
+      // Refresh inmediato del estado para reflejar codigo_pendiente=true
+      try {
+        const est = await whatsappAbogadoApi.getEstado(abogadoId, token || undefined);
+        setWaEstado(est);
+      } catch {}
     } catch (err) {
-      setWhapiError(err instanceof Error ? err.message : "No se pudo conectar el canal");
-      setWhapiState("error");
+      setWaError(err instanceof Error ? err.message : "No se pudo generar el código.");
+    } finally {
+      setWaLoading(false);
     }
   };
 
-  const handleRefreshWhapi = async () => {
+  const handleDesvincularWhatsapp = async () => {
     if (!abogadoId) return;
-    setWhapiState("verifying");
-    setWhapiError("");
+    if (!confirm("¿Desvincular tu WhatsApp de Minka? El bot dejará de reconocerte.")) return;
+    setWaLoading(true);
+    setWaError("");
     try {
-      const res = await abogadosApi.refreshWhapi(abogadoId, token || undefined);
-      setWhapiSavedNumber(res.phone_actualizado || "");
-      setWhapiSavedChannelId(res.channel_info.channel_id);
-      if (res.cambio_detectado) {
-        setWhapiError(""); // limpiar errores
-        // Mostrar toast simple en errorbox como confirmación verde
-      }
-      setWhapiState("idle");
+      await whatsappAbogadoApi.desvincular(abogadoId, token || undefined);
+      setWaCodigo(null);
+      const est = await whatsappAbogadoApi.getEstado(abogadoId, token || undefined);
+      setWaEstado(est);
     } catch (err) {
-      setWhapiError(err instanceof Error ? err.message : "No se pudo verificar el canal");
-      setWhapiState("error");
+      setWaError(err instanceof Error ? err.message : "Error al desvincular.");
+    } finally {
+      setWaLoading(false);
     }
   };
 
-  const handleDisconnectWhapi = async () => {
-    if (!abogadoId) return;
-    if (!confirm("¿Desconectar el canal Whapi? El bot dejará de responder mensajes.")) return;
-    try {
-      await abogadosApi.disconnectWhapi(abogadoId, token || undefined);
-      setWhapiSavedInfo(null);
-      setWhapiSavedChannelId("");
-      setWhapiSavedNumber("");
-    } catch (err) {
-      setWhapiError(err instanceof Error ? err.message : "Error al desconectar");
-      setWhapiState("error");
-    }
-  };
-
-  const copyWebhookUrl = () => {
-    if (!whapiSavedInfo?.webhook_url) return;
-    navigator.clipboard.writeText(whapiSavedInfo.webhook_url);
-    setWebhookCopied(true);
-    setTimeout(() => setWebhookCopied(false), 2000);
+  const handleCopiarCodigo = () => {
+    if (!waCodigo) return;
+    navigator.clipboard.writeText(`registrar ${waCodigo.codigo}`);
+    setWaCodigoCopiado(true);
+    setTimeout(() => setWaCodigoCopiado(false), 2000);
   };
 
   if (isLoading) {
@@ -345,22 +382,27 @@ export default function ConfiguracionPage() {
           </div>
         </section>
 
-        {/* Integración WhatsApp (Whapi) */}
+        {/* WhatsApp con Minka — modelo single-channel */}
         <section className="bg-white rounded-xl border border-gray-200 overflow-hidden">
           <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
             <MessageCircle className="w-4 h-4 text-gray-500" />
-            <h2 className="font-semibold text-gray-900">Integración WhatsApp</h2>
+            <h2 className="font-semibold text-gray-900">WhatsApp con Minka</h2>
             {!whapiStatus.enabled ? (
               <span className="ml-auto inline-flex items-center gap-1 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5">
                 <AlertCircle className="w-3 h-3" />
                 En mantenimiento
               </span>
-            ) : whapiSavedChannelId && (
+            ) : waEstado?.verificado ? (
               <span className="ml-auto inline-flex items-center gap-1 text-xs text-green-700 bg-green-50 border border-green-200 rounded-full px-2 py-0.5">
                 <CheckCircle2 className="w-3 h-3" />
-                Conectado
+                Vinculado
               </span>
-            )}
+            ) : waCodigo ? (
+              <span className="ml-auto inline-flex items-center gap-1 text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded-full px-2 py-0.5">
+                <Loader2 className="w-3 h-3 animate-spin" />
+                Esperando verificación
+              </span>
+            ) : null}
           </div>
 
           <div className="p-5 space-y-4">
@@ -371,165 +413,124 @@ export default function ConfiguracionPage() {
                   Integración temporalmente deshabilitada
                 </p>
                 <p className="text-xs text-amber-800">
-                  {whapiStatus.mensaje ||
-                    "Estamos refactorizando esta parte de la plataforma. La conexión y verificación de canales WhatsApp está pausada. Puedes desconectar canales viejos si necesitas, pero no se podrán configurar nuevos hasta que vuelva a habilitarse."}
+                  {whapiStatus.mensaje || "Estamos ajustando esta parte de la plataforma. Podrás vincular tu WhatsApp cuando vuelva a habilitarse."}
                 </p>
               </div>
             )}
-            {!whapiStatus.enabled ? (
-              // Modo mantenimiento: solo permitimos desconectar canales viejos
-              whapiSavedChannelId ? (
-                <div className="space-y-3">
-                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm space-y-1.5">
-                    <div className="flex justify-between gap-3">
-                      <span className="text-gray-500">Canal actual:</span>
-                      <span className="font-mono text-gray-800">{whapiSavedChannelId}</span>
-                    </div>
-                    <div className="flex justify-between gap-3">
-                      <span className="text-gray-500">Número:</span>
-                      <span className="font-mono text-gray-800">{whapiSavedNumber || "—"}</span>
-                    </div>
-                  </div>
-                  <button
-                    onClick={handleDisconnectWhapi}
-                    className="inline-flex items-center gap-1.5 text-sm text-red-600 hover:text-red-800"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    Desconectar canal
-                  </button>
-                </div>
-              ) : (
-                <p className="text-sm text-gray-500">
-                  No hay canal configurado. Cuando vuelva a habilitarse podrás conectar uno.
+
+            {whapiStatus.enabled && waEstado?.verificado ? (
+              // ── Estado vinculado ──
+              <>
+                <p className="text-sm text-gray-600">
+                  Tu WhatsApp está vinculado a Minka. Vas a recibir recordatorios automáticos de plazos y podés preguntar sobre tus casos en cualquier momento.
                 </p>
-              )
-            ) : whapiSavedChannelId ? (
-              // ── Estado conectado ──
-              <>
                 <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm space-y-1.5">
-                  <div className="flex justify-between gap-3">
-                    <span className="text-gray-500">Canal:</span>
-                    <span className="font-mono text-gray-800">{whapiSavedChannelId}</span>
-                  </div>
-                  <div className="flex justify-between gap-3">
-                    <span className="text-gray-500">Número WhatsApp:</span>
-                    <span className="font-mono text-gray-800">{whapiSavedNumber || "—"}</span>
+                  <div className="flex items-center gap-2">
+                    <Smartphone className="w-4 h-4 text-gray-500" />
+                    <span className="font-mono text-gray-800">{waEstado.whatsapp_numero_display || waEstado.whatsapp_numero}</span>
                   </div>
                 </div>
-
-                {whapiSavedInfo?.webhook_url && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 space-y-2">
-                    <p className="text-xs font-medium text-blue-900">URL de webhook (copia esto a Whapi):</p>
-                    <div className="flex items-center gap-2 bg-white border border-blue-200 rounded px-2 py-1.5">
-                      <code className="text-xs text-gray-700 flex-1 truncate">{whapiSavedInfo.webhook_url}</code>
-                      <button
-                        onClick={copyWebhookUrl}
-                        className="text-blue-600 hover:text-blue-800 shrink-0"
-                        title="Copiar"
-                      >
-                        {webhookCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                      </button>
-                    </div>
-                    <p className="text-xs text-blue-700">
-                      En whapi.cloud → tu canal → Settings → Webhooks → pega esta URL en "Endpoint" y activa el evento <code className="bg-blue-100 px-1 rounded">messages.post</code>.
-                    </p>
-                  </div>
-                )}
-
-                <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 text-xs text-blue-900 space-y-1.5">
-                  <p className="font-medium">¿Vas a cambiar el número vinculado al canal?</p>
-                  <p>
-                    1) Re-pairea el canal en whapi.cloud (logout + nuevo QR con el otro WhatsApp). 2) Vuelve aquí y haz clic en <strong>"Verificar y actualizar"</strong> abajo. El token y la URL de webhook NO cambian.
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={handleRefreshWhapi}
-                    disabled={whapiState === "verifying"}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-                  >
-                    {whapiState === "verifying" ? (
-                      <>
-                        <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        Verificando…
-                      </>
-                    ) : (
-                      <>
-                        <RefreshCw className="w-3.5 h-3.5" />
-                        Verificar y actualizar número
-                      </>
-                    )}
-                  </button>
-
-                  <button
-                    onClick={handleDisconnectWhapi}
-                    className="inline-flex items-center gap-1.5 text-sm text-red-600 hover:text-red-800"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    Desconectar canal
-                  </button>
-                </div>
-              </>
-            ) : (
-              // ── Estado sin conectar ──
-              <>
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-900">
-                  <p className="font-medium mb-1.5 flex items-center gap-1.5">
-                    <AlertCircle className="w-4 h-4" />
-                    Aún no has conectado tu canal de WhatsApp
-                  </p>
-                  <ol className="text-xs space-y-1 pl-5 list-decimal text-amber-800">
-                    <li>Crea o accede a tu canal en <a href="https://whapi.cloud" target="_blank" rel="noopener noreferrer" className="underline font-medium">whapi.cloud</a> y escanea el QR con tu WhatsApp.</li>
-                    <li>En el dashboard de Whapi copia el <span className="font-medium">API token</span> de tu canal.</li>
-                    <li>Pega el token aquí abajo y haz clic en "Conectar canal".</li>
-                    <li>Después se te mostrará la URL de webhook que debes pegar en la configuración del canal en Whapi.</li>
-                  </ol>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Token API de Whapi
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={whapiTokenVisible ? "text" : "password"}
-                      value={whapiToken}
-                      onChange={(e) => { setWhapiToken(e.target.value); setWhapiError(""); }}
-                      placeholder="Pega aquí tu token (ej: aBcDeFgHiJkLmN...)"
-                      className="w-full px-3 py-2 pr-10 border border-gray-200 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-minka-500/20 focus:border-minka-500"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setWhapiTokenVisible(!whapiTokenVisible)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                      title={whapiTokenVisible ? "Ocultar" : "Mostrar"}
-                    >
-                      {whapiTokenVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                  {whapiError && (
-                    <p className="mt-1.5 text-xs text-red-600 flex items-center gap-1">
-                      <AlertCircle className="w-3.5 h-3.5" />
-                      {whapiError}
-                    </p>
-                  )}
-                </div>
-
                 <button
-                  onClick={handleConnectWhapi}
-                  disabled={whapiState === "saving" || !whapiToken.trim() || !abogadoId}
-                  className="px-4 py-2 bg-minka-500 text-white rounded-lg hover:bg-minka-600 transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={handleDesvincularWhatsapp}
+                  disabled={waLoading}
+                  className="inline-flex items-center gap-1.5 text-sm text-red-600 hover:text-red-800 disabled:opacity-50"
                 >
-                  {whapiState === "saving" ? (
-                    <span className="flex items-center gap-2">
-                      <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Verificando…
-                    </span>
-                  ) : "Conectar canal"}
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Desvincular este número
                 </button>
               </>
-            )}
+            ) : whapiStatus.enabled && waCodigo ? (
+              // ── Estado: código generado, esperando que el abogado lo mande ──
+              <>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
+                  <div>
+                    <p className="text-xs font-medium text-blue-900 uppercase tracking-wide mb-1">Tu código</p>
+                    <div className="flex items-center gap-2">
+                      <code className="flex-1 px-3 py-2 bg-white border border-blue-200 rounded font-mono text-2xl text-blue-900 tracking-widest text-center">
+                        {waCodigo.codigo}
+                      </code>
+                      <button
+                        onClick={handleCopiarCodigo}
+                        className="p-2 text-blue-600 hover:bg-blue-100 rounded"
+                        title="Copiar 'registrar CODIGO' al portapapeles"
+                      >
+                        {waCodigoCopiado ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="text-sm text-blue-900 space-y-1">
+                    <p className="font-medium">Ahora desde tu WhatsApp:</p>
+                    <ol className="list-decimal pl-5 text-xs space-y-1 text-blue-800">
+                      <li>Abrí un chat con el número de Minka: <span className="font-mono font-medium">{waCodigo.empresa_numero ? (waEmpresa?.numero_display || waCodigo.empresa_numero) : "(pendiente de configurar)"}</span></li>
+                      <li>Mandá el mensaje: <code className="bg-white px-1.5 py-0.5 rounded border border-blue-200">registrar {waCodigo.codigo}</code></li>
+                      <li>En unos segundos esta pantalla se actualiza sola.</li>
+                    </ol>
+                  </div>
+                  <p className="text-xs text-blue-700">
+                    El código expira en {waCodigo.ttl_minutos} minutos. Si no llegás a tiempo, pedí uno nuevo.
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={handleVincularWhatsapp}
+                    disabled={waLoading}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    <Loader2 className={`w-3.5 h-3.5 ${waLoading ? "animate-spin" : ""}`} />
+                    Generar otro código
+                  </button>
+                  <button
+                    onClick={() => setWaCodigo(null)}
+                    className="text-sm text-gray-500 hover:text-gray-700"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </>
+            ) : whapiStatus.enabled ? (
+              // ── Estado sin vincular ──
+              <>
+                <div className="text-sm text-gray-700 space-y-2">
+                  <p>
+                    Vinculá tu WhatsApp con Minka para:
+                  </p>
+                  <ul className="list-disc pl-5 text-xs text-gray-600 space-y-0.5">
+                    <li>Preguntarle al bot sobre el estado, plazos y partes de tus casos en lenguaje natural.</li>
+                    <li>Recibir recordatorios automáticos de audiencias y vencimientos.</li>
+                    <li>Actualizar el estado de un caso o notificar a un cliente desde el chat.</li>
+                  </ul>
+                </div>
+                {waEmpresa && !waEmpresa.configurado && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-900 flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                    <span>El equipo de SimplifAI aún no configuró el número público de Minka. Vinculá igual y te avisamos cuando esté listo, o consultá a soporte.</span>
+                  </div>
+                )}
+                <button
+                  onClick={handleVincularWhatsapp}
+                  disabled={waLoading || !abogadoId}
+                  className="px-4 py-2 bg-minka-500 text-white rounded-lg hover:bg-minka-600 transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
+                >
+                  {waLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Generando código…
+                    </>
+                  ) : (
+                    <>
+                      <Smartphone className="w-4 h-4" />
+                      Vincular mi WhatsApp
+                    </>
+                  )}
+                </button>
+                {waError && (
+                  <p className="text-xs text-red-600 flex items-center gap-1">
+                    <AlertCircle className="w-3.5 h-3.5" />
+                    {waError}
+                  </p>
+                )}
+              </>
+            ) : null}
           </div>
         </section>
 
